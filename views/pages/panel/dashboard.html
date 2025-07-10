@@ -1,0 +1,11 @@
+{{/* Bu sayfa, panel.html layout'unu kullanır. */}}
+{{template "layouts/panel.html" .}}
+
+{{/* Bu define bloğu, panel.html'deki {{embed}}'in yerini alır. */}}
+{{define "body"}}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Dashboard</h1>
+    </div>
+    <p>Welcome to your control panel. Here you can manage users, products, and more.</p>
+    <!-- ... Diğer dashboard widget'ları ... -->
+{{end}}

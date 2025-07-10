@@ -1,0 +1,275 @@
+{{/* Bu layout, main.html'in yapısını kullanır. */}}
+{{template "layouts/main.html" .}}
+
+{{/* Bu define bloğu, main.html'deki {{embed}}'in yerini alır. */}}
+{{define "body"}}
+<div class="d-flex" style="min-height: calc(100vh - 56px);"> <!-- 56px header yüksekliği varsayımı -->
+    <!-- Panel'e özel Sidebar'ı partial'dan dahil et -->
+    {{template "partials/panel/sidebar.html" .}}
+
+    <div class="flex-grow-1 d-flex flex-column">
+        <!-- Panel'e özel Topbar'ı partial'dan dahil et -->
+        {{template "partials/panel/topbar.html" .}}
+
+        <div class="p-4 bg-light flex-grow-1">
+            <!-- Bu alan, pages/panel/dashboard.html gibi asıl sayfa tarafından doldurulacak -->
+            {{embed}}
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "stylesheets"}}'in yerini alır. */}}
+{{define "stylesheets"}}
+    <link rel="stylesheet" href="/static/css/panel.css">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "scripts"}}'in yerini alır. */}}
+{{define "scripts"}}
+    <script src="/static/js/panel.js"></script>
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "title"}}'ın yerini alır. */}}
+{{define "title"}}
+    {{if .Title}}{{.Title}} - {{end}}ZATRANO Panel
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "description"}}'in yerini alır. */}}
+{{define "description"}}
+    ZATRANO Panel - Go ile yazılmış bir blog uygulamasının yönetim paneli.
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "keywords"}}'in yerini alır. */}}
+{{define "keywords"}}
+    blog, Go, web uygulaması, ZATRANO, panel
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "author"}}'ın yerini alır. */}}
+{{define "author"}}
+    Zatrano Geliştirici Ekibi
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "favicon"}}'ın yerini alır. */}}
+{{define "favicon"}}
+    <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "og:image"}}'in yerini alır. */}}
+{{define "og:image"}}
+    <meta property="og:image" content="/static/images/og-image.png">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "og:title"}}'ın yerini alır. */}}
+{{define "og:title"}}
+    {{if .Title}}{{.Title}} - {{end}}ZATRANO Panel
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "og:description"}}'in yerini alır. */}}
+{{define "og:description"}}
+    ZATRANO Panel - Go ile yazılmış bir blog uygulamasının yönetim paneli.
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "og:type"}}'ın yerini alır. */}}
+{{define "og:type"}}
+    website
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:card"}}'ın yerini alır. */}}
+{{define "twitter:card"}}
+    <meta name="twitter:card" content="summary_large_image">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:title"}}'ın yerini alır. */}}
+{{define "twitter:title"}}
+    {{if .Title}}{{.Title}} - {{end}}ZATRANO Panel
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:description"}}'in yerini alır. */}}
+{{define "twitter:description"}}
+    ZATRANO Panel - Go ile yazılmış bir blog uygulamasının yönetim paneli.
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:image"}}'in yerini alır. */}}
+{{define "twitter:image"}}
+    <meta name="twitter:image" content="/static/images/og-image.png">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:site"}}'in yerini alır. */}}
+{{define "twitter:site"}}
+    <meta name="twitter:site" content="@zatrano">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:creator"}}'ın yerini alır. */}}
+{{define "twitter:creator"}}
+    <meta name="twitter:creator" content="@zatrano">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:domain"}}'in yerini alır. */}}
+{{define "twitter:domain"}}
+    <meta name="twitter:domain" content="zatrano.com">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:url"}}'ın yerini alır. */}}
+{{define "twitter:url"}}
+    <meta name="twitter:url" content="{{.Global.BaseUrl}}">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:name:iphone"}}'ın yerini alır. */}}
+{{define "twitter:app:name:iphone"}}
+    <meta name="twitter:app:name:iphone" content="ZATRANO">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:id:iphone"}}'ın yerini alır. */}}
+{{define "twitter:app:id:iphone"}}
+    <meta name="twitter:app:id:iphone" content="1234567890">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:url:iphone"}}'ın yerini alır. */}}
+{{define "twitter:app:url:iphone"}}
+    <meta name="twitter:app:url:iphone" content="{{.Global.BaseUrl}}">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:name:ipad"}}'ın yerini alır. */}}
+{{define "twitter:app:name:ipad"}}
+    <meta name="twitter:app:name:ipad" content="ZATRANO">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:id:ipad"}}'ın yerini alır. */}}
+{{define "twitter:app:id:ipad"}}
+    <meta name="twitter:app:id:ipad" content="1234567890">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:url:ipad"}}'ın yerini alır. */}}
+{{define "twitter:app:url:ipad"}}
+    <meta name="twitter:app:url:ipad" content="{{.Global.BaseUrl}}">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:name:googleplay"}}'in yerini alır. */}}
+{{define "twitter:app:name:googleplay"}}
+    <meta name="twitter:app:name:googleplay" content="ZATRANO">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:id:googleplay"}}'ın yerini alır. */}}
+{{define "twitter:app:id:googleplay"}}
+    <meta name="twitter:app:id:googleplay" content="com.zatrano.app">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "twitter:app:url:googleplay"}}'ın yerini alır. */}}
+{{define "twitter:app:url:googleplay"}}
+    <meta name="twitter:app:url:googleplay" content="{{.Global.BaseUrl}}">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "canonical"}}'ın yerini alır. */}}
+{{define "canonical"}}
+    <link rel="canonical" href="{{.Global.BaseUrl}}">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "robots"}}'in yerini alır. */}}
+{{define "robots"}}
+    <meta name="robots" content="index, follow">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "google-site-verification"}}'ın yerini alır. */}}
+{{define "google-site-verification"}}
+    <meta name="google-site-verification" content="your-google-site-verification-code">
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "google-analytics"}}'in yerini alır. */}}
+{{define "google-analytics"}}
+    <script async src="https://www.googletagmanager.com/gtag/js?id=YOUR_TRACKING_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'YOUR_TRACKING_ID');
+    </script>
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "cookie-consent"}}'in yerini alır. */}}
+{{define "cookie-consent"}}
+    <script>
+        window.cookieconsent.initialise({
+            "palette": {
+                "popup": {
+                    "background": "#000"
+                },
+                "button": {
+                    "background": "#f1d600"
+                }
+            },
+            "theme": "classic",
+            "content": {
+                "message": "Bu site çerezler kullanmaktadır.",
+                "dismiss": "Tamam",
+                "link": "Daha fazla bilgi",
+                "href": "/privacy-policy"
+            }
+        });
+    </script>
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "custom-css"}}'in yerini alır. */}}
+{{define "custom-css"}}
+    <style>
+        /* Burada özel CSS kodlarınızı yazabilirsiniz */
+    </style>
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "custom-js"}}'in yerini alır. */}}
+{{define "custom-js"}}
+    <script>
+        // Burada özel JavaScript kodlarınızı yazabilirsiniz
+    </script>
+{{end}}
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "body"}}'in yerini alır. */}}
+{{define "body"}}
+    <div class="container">
+        {{embed}}
+    </div>
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "footer"}}'in yerini alır. */}}
+{{define "footer"}}
+    <footer class="text-center mt-4">
+        <p>&copy; {{now.Year}} ZATRANO. Tüm hakları saklıdır.</p>
+    </footer>
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "header"}}'in yerini alır. */}}
+{{define "header"}}
+    <header class="bg-primary text-white text-center py-3">
+        <h1>ZATRANO Panel</h1>
+    </header>
+{{end}}
+
+{{/* Bu define bloğu, main.html'deki {{block "sidebar"}}'ın yerini alır. */}}
+{{define "sidebar"}}
+    <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+        <div class="sidebar-sticky">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/panel/dashboard">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/panel/posts">
+                        Posts
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/panel/categories">
+                        Categories
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/panel/users">
+                        Users
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+{{end}}

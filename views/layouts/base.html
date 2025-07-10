@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - ZATRANO</title>
+    <!-- Ortak CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <!-- Alt şablonların ekstra CSS eklemesi için bir alan -->
+    {{block "stylesheets" .}}{{end}}
+</head>
+<body>
+
+    <!-- Bu alan, main.html, panel.html gibi orta katman layout'ları tarafından doldurulacak. -->
+    {{embed}}
+
+    <!-- Ortak JS dosyaları ve Flash Mesaj script'i -->
+    <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                const flashMessages = JSON.parse('{{.Global.FlashMessagesJson}}');
+                if (flashMessages && flashMessages.length > 0) {
+                    flashMessages.forEach(function (msg) {
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 5000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                            }
+                        });
+                        Toast.fire({ icon: msg.type, title: msg.message });
+                    });
+                }
+            } catch (e) {
+                // JSON parse hatası olursa konsola yaz, uygulamayı kırma.
+                console.error("Could not parse flash messages:", e);
+            }
+        });
+    </script>
+    <!-- Alt şablonların ekstra JS eklemesi için bir alan -->
+    {{block "scripts" .}}{{end}}
+</body>
+</html>

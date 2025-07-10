@@ -1,0 +1,182 @@
+{{/* Bu layout, base.html'in yapısını kullanır. */}}
+{{template "layouts/base.html" .}}
+
+{{/* Bu define bloğu, base.html'deki {{embed}}'in yerini alır. */}}
+{{define "body"}}
+    <!-- Header'ı partial'dan dahil et -->
+    {{template "partials/header.html" .}}
+
+    <main class="container mt-4">
+        <!-- Bu alan, pages/home.html gibi asıl sayfa tarafından doldurulacak -->
+        {{embed}}
+    </main>
+
+    <!-- Footer'ı partial'dan dahil et -->
+    {{template "partials/footer.html" .}}
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "stylesheets"}}'in yerini alır. */}}
+{{define "stylesheets"}}
+    <link rel="stylesheet" href="/static/css/main.css">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "scripts"}}'in yerini alır. */}}
+{{define "scripts"}}
+    <script src="/static/js/main.js"></script>
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "title"}}'ın yerini alır. */}}
+{{define "title"}}
+    {{if .Title}}{{.Title}} - {{end}}ZATRANO
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "description"}}'in yerini alır. */}}
+{{define "description"}}
+    ZATRANO - Go ile yazılmış bir blog uygulaması.
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "keywords"}}'in yerini alır. */}}
+{{define "keywords"}}
+    blog, Go, web uygulaması, ZATRANO
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "author"}}'ın yerini alır. */}}
+{{define "author"}}
+    Zatrano Geliştirici Ekibi
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "favicon"}}'ın yerini alır. */}}
+{{define "favicon"}}
+    <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "og:image"}}'in yerini alır. */}}
+{{define "og:image"}}
+    <meta property="og:image" content="/static/images/og-image.png">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "og:title"}}'ın yerini alır. */}}
+{{define "og:title"}}
+    {{if .Title}}{{.Title}} - {{end}}ZATRANO
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "og:description"}}'in yerini alır. */}}
+{{define "og:description"}}
+    ZATRANO - Go ile yazılmış bir blog uygulaması.
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "og:type"}}'ın yerini alır. */}}
+{{define "og:type"}}
+    <meta property="og:type" content="website">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "twitter:card"}}'ın yerini alır. */}}
+{{define "twitter:card"}}
+    <meta name="twitter:card" content="summary_large_image">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "twitter:title"}}'ın yerini alır. */}}
+{{define "twitter:title"}}
+    {{if .Title}}{{.Title}} - {{end}}ZATRANO
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "twitter:description"}}'in yerini alır. */}}
+{{define "twitter:description"}}
+    ZATRANO - Go ile yazılmış bir blog uygulaması.
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "twitter:image"}}'in yerini alır. */}}
+{{define "twitter:image"}}
+    <meta name="twitter:image" content="/static/images/twitter-image.png">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "canonical"}}'ın yerini alır. */}}
+{{define "canonical"}}
+    <link rel="canonical" href="{{.Global.BaseURL}}">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "robots"}}'in yerini alır. */}}
+{{define "robots"}}
+    <meta name="robots" content="index, follow">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "viewport"}}'in yerini alır. */}}
+{{define "viewport"}}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "charset"}}'in yerini alır. */}}
+{{define "charset"}}
+    <meta charset="UTF-8">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "language"}}'in yerini alır. */}}
+{{define "language"}}
+    <html lang="en">
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "body"}}'in yerini alır. */}}
+{{define "body"}}
+    <body>
+        {{template "body" .}}
+    </body>
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "html"}}'in yerini alır. */}}
+{{define "html"}}
+    <!DOCTYPE html>
+    <html lang="en">
+        {{template "language" .}}
+        <head>
+            {{template "charset" .}}
+            {{template "viewport" .}}
+            <title>{{template "title" .}}</title>
+            {{template "favicon" .}}
+            {{template "stylesheets" .}}
+            {{template "og:image" .}}
+            {{template "og:title" .}}
+            {{template "og:description" .}}
+            {{template "og:type" .}}
+            {{template "twitter:card" .}}
+            {{template "twitter:title" .}}
+            {{template "twitter:description" .}}
+            {{template "twitter:image" .}}
+            {{template "canonical" .}}
+            {{template "robots" .}}
+        </head>
+        <body>
+            {{block "body"}}{{end}}
+        </body>
+    </html>
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "scripts"}}'in yerini alır. */}}
+{{define "scripts"}}
+    {{template "scripts" .}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "title"}}'ın yerini alır. */}}
+{{define "title"}}
+    {{if .Title}}{{.Title}} - {{end}}ZATRANO
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "description"}}'in yerini alır. */}}
+{{define "description"}}
+    ZATRANO - Go ile yazılmış bir blog uygulaması.
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "keywords"}}'in yerini alır. */}}
+{{define "keywords"}}
+    blog, Go, web uygulaması, ZATRANO
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "author"}}'ın yerini alır. */}}
+{{define "author"}}
+    Zatrano Geliştirici Ekibi
+{{end}}
+
+{{/* Bu define bloğu, base.html'deki {{block "favicon"}}'ın yerini alır. */}}
+{{define "favicon"}}
+    <link rel="icon" href="/static/images/favicon.ico" type="image/x-icon">
+{{end}}
