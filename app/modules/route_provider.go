@@ -5,23 +5,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zatrano/zatrano/app/routes"
+	// --- DOĞRU IMPORT YOLLARI ---
+	// Projenin kendi içindeki paketlere, go.mod'da tanımlanan tam yolla erişiyoruz.
+	"github.com/zatrano/zatrano/routes"
 	"github.com/zatrano/zatrano/config"
 	"github.com/zatrano/zatrano/internal/zatrano/kernel"
 	"github.com/zatrano/zatrano/internal/zatrano/module"
 	
+	// --- HARİCİ PAKETLER ---
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/session"
 )
 
+// RouteProvider, tüm uygulama rotalarını kaydeder ve yapılandırır.
 type RouteProvider struct{}
 
+// Register, rota katmanının ihtiyaç duyacağı middleware'leri IoC konteynerine kaydeder.
 func (p *RouteProvider) Register(k kernel.IKernel) {
 	// --- CSRF MIDDLEWARE ---
 	k.RegisterSingleton("middleware.csrf", func(kern kernel.IKernel) (interface{}, error) {
-		sessionStore, _ := kern.Get("session.store")
+		sessionStore, err := kern.Get("session.store")
+		if err != nil {
+			return nil, err
+		}
 		return csrf.New(csrf.Config{
 			Session:    sessionStore.(*session.Store),
 			ContextKey: "csrf",
@@ -35,10 +43,10 @@ func (p *RouteProvider) Register(k kernel.IKernel) {
 
 	// --- RATE LIMITER MIDDLEWARE'LERİ ---
 
-	// 1. API için Rate Limiter (Daha Yüksek Limit)
+	// API için Rate Limiter
 	k.RegisterSingleton("middleware.limiter.api", func(kern kernel.IKernel) (interface{}, error) {
 		return limiter.New(limiter.Config{
-			Max:        config.GetInt("API_RATE_LIMIT", 60), // Dakikada 60 istek
+			Max:        config.GetInt("API_RATE_LIMIT", 60),
 			Expiration: 1 * time.Minute,
 			KeyGenerator: func(c *fiber.Ctx) string { return c.IP() },
 			LimitReached: func(c *fiber.Ctx) error {
@@ -47,30 +55,31 @@ func (p *RouteProvider) Register(k kernel.IKernel) {
 		}), nil
 	})
 
-	// 2. WEB Formları için Genel Rate Limiter (Daha Düşük Limit)
+	// WEB Formları için Genel Rate Limiter
 	k.RegisterSingleton("middleware.limiter.web", func(kern kernel.IKernel) (interface{}, error) {
 		return limiter.New(limiter.Config{
-			Max:        config.GetInt("WEB_FORM_RATE_LIMIT", 15), // Dakikada 15 form gönderimi
+			Max:        config.GetInt("WEB_FORM_RATE_LIMIT", 15),
 			Expiration: 1 * time.Minute,
 			KeyGenerator: func(c *fiber.Ctx) string { return c.IP() },
 			LimitReached: func(c *fiber.Ctx) error {
-				// Form gönderimi olduğu için JSON yerine bir hata mesajı flash'leyip geri yönlendirmek daha iyi.
-				// flash.Error(c, "You are submitting forms too frequently. Please try again later.")
-				// return c.RedirectBack("/")
-				// Şimdilik basit bir hata döndürelim:
 				return c.Status(fiber.StatusTooManyRequests).SendString("Too many form submissions. Please try again in a minute.")
 			},
-			// Sadece POST, PUT, DELETE, PATCH isteklerini sınırla. GET istekleri serbest.
 			Next: func(c *fiber.Ctx) bool {
-				return c.Method() == "GET"
+				// Sadece state değiştiren metodları sınırla, GET'leri serbest bırak.
+				switch c.Method() {
+				case "POST", "PUT", "DELETE", "PATCH":
+					return false // Limiter çalışsın
+				default:
+					return true // Limiter'ı atla
+				}
 			},
 		}), nil
 	})
 
-	// 3. Hassas İşlemler için Rate Limiter (Çok Düşük Limit)
+	// Hassas İşlemler için Rate Limiter (Login, vb.)
 	k.RegisterSingleton("middleware.limiter.auth", func(kern kernel.IKernel) (interface{}, error) {
 		return limiter.New(limiter.Config{
-			Max:        config.GetInt("AUTH_RATE_LIMIT", 5), // 15 dakikada 5 deneme
+			Max:        config.GetInt("AUTH_RATE_LIMIT", 5),
 			Expiration: 15 * time.Minute,
 			KeyGenerator: func(c *fiber.Ctx) string { return c.IP() },
 			LimitReached: func(c *fiber.Ctx) error {
@@ -78,8 +87,12 @@ func (p *RouteProvider) Register(k kernel.IKernel) {
 			},
 		}), nil
 	})
+	
+	// NOT: Diğer middleware'ler (auth, guest) de burada kaydedilmelidir.
+	// k.Register("middleware.auth", ...)
 }
 
+// Boot, rota gruplarını oluşturur, middleware'leri atar ve rota dosyalarını çağırır.
 func (p *RouteProvider) Boot(k kernel.IKernel, app *fiber.App) {
 	log.Println("Booting Route Provider and applying middleware groups...")
 
@@ -90,30 +103,45 @@ func (p *RouteProvider) Boot(k kernel.IKernel, app *fiber.App) {
 	authLimiter, _ := k.Get("middleware.limiter.auth")
 
 	// ==================================================================
-	// GRUP 1: WEB ROTALARI
+	// GRUP 1: API ROTALARI
+	// Middleware Zinciri: [Rate Limiter (API)]
+	// ==================================================================
+	apiRouter := app.Group("/api", apiLimiter.(fiber.Handler))
+	routes.RegisterApiRoutes(apiRouter, k)
+
+	// ==================================================================
+	// GRUP 2: WEB ROTALARI (Genel)
 	// Middleware Zinciri: [Rate Limiter (Web)] -> [CSRF]
 	// ==================================================================
 	webRouter := app.Group("/", webLimiter.(fiber.Handler), csrfMiddleware.(fiber.Handler))
 	
 	routes.RegisterWebRoutes(webRouter, k)
-	// Login gibi hassas rotalar için AYRI bir grup oluşturuyoruz.
 	
 	// ==================================================================
-	// GRUP 2: AUTH ROTALARI (Giriş, Kayıt, Şifre Sıfırlama)
-	// Middleware Zinciri: [Rate Limiter (Web)] -> [Rate Limiter (Auth)] -> [CSRF]
+	// GRUP 3: AUTH ROTALARI (Daha Sıkı Kurallar)
+	// Middleware Zinciri: (webRouter'dan miras) [Rate Limiter (Web)] -> [CSRF] -> [Rate Limiter (Auth)]
 	// ==================================================================
-	// webRouter'dan türetildiği için zaten webLimiter ve CSRF'ye sahip.
-	// Ek olarak daha sıkı bir rate limit uyguluyoruz.
+	// `webRouter.Group` yerine `webRouter.With` kullanmak, aynı ön ekte (`/`) kalıp
+	// sadece ek middleware uygulamamızı sağlar.
 	authRouter := webRouter.With(authLimiter.(fiber.Handler))
 	routes.RegisterAuthRoutes(authRouter, k)
 
 	// ==================================================================
-	// GRUP 3: API ROTALARI
-	// Middleware Zinciri: [Rate Limiter (API)]
+	// GRUP 4: PANEL ROTALARI (Kimlik Doğrulama Gerekli)
+	// Middleware Zinciri: (webRouter'dan miras) [Rate Limiter (Web)] -> [CSRF] -> [Auth Middleware]
 	// ==================================================================
-	// Bu grup, doğrudan `app`'ten türetildiği için CSRF veya webLimiter'a sahip değil.
-	apiRouter := app.Group("/api", apiLimiter.(fiber.Handler))
-	routes.RegisterApiRoutes(apiRouter, k)
-	
-	// ... (CSRF'siz web rotaları grubu burada aynı kalabilir) ...
+	// authMiddleware, _ := k.Get("middleware.auth")
+	// panelRouter := webRouter.Group("/panel", authMiddleware.(fiber.Handler))
+	// routes.RegisterPanelRoutes(panelRouter, k)
+
+	// ==================================================================
+	// GRUP 5: CSRF'SİZ WEB ROTALARI (Webhook'lar vb.)
+	// ==================================================================
+	// Doğrudan ana `app` üzerinden tanımlandığı için hiçbir grup middleware'ini almaz.
+	app.Post("/payment/callback", func(c *fiber.Ctx) error {
+		log.Println("Received payment callback:", string(c.Body()))
+		return c.SendStatus(200)
+	})
+
+	log.Println("All routes have been registered.")
 }
