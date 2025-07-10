@@ -2,25 +2,23 @@ package handlers
 
 import (
 	"fmt"
-	"reflect"
-	"strconv"
 	"strings"
 	
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
-	builder "github.com/zatrano/form-builder"
 	"github.com/zatrano/zatrano/app/services"
 	"github.com/zatrano/zatrano/internal/zatrano/flash"
+	"github.com/zatrano/zatrano/internal/zatrano/form" // DAHİLİ form paketimiz
 	"github.com/zatrano/zatrano/internal/zatrano/view"
 )
 
 // BaseHandler, SSR için standart CRUD işlemlerini yönetir.
 type BaseHandler[T any, CForm any, UForm any] struct {
-	Service      services.IBaseService[T]
+	// Servis arayüzü artık form tiplerini de biliyor.
+	Service      services.IBaseService[T, CForm, UForm]
 	ResourceName string // "users", "products" vb. (küçük harfle)
 }
 
-func NewBaseHandler[T any, CForm any, UForm any](service services.IBaseService[T], resourceName string) *BaseHandler[T, CForm, UForm] {
+func NewBaseHandler[T any, CForm any, UForm any](service services.IBaseService[T, CForm, UForm], resourceName string) *BaseHandler[T, CForm, UForm] {
 	return &BaseHandler[T, CForm, UForm]{Service: service, ResourceName: resourceName}
 }
 
@@ -35,14 +33,14 @@ func (h *BaseHandler[T, CForm, UForm]) Index(c *fiber.Ctx) error {
 
 // Create, oluşturma formunu gösterir.
 func (h *BaseHandler[T, CForm, UForm]) Create(c *fiber.Ctx) error {
-	form := builder.New(builder.Config{
-		Action:    fmt.Sprintf("/%s", h.ResourceName),
-		Method:    "POST",
-		CSRFToken: c.Locals("csrf").(string),
+	// Artık CSRF token'ı veya session ile uğraşmıyoruz.
+	formBuilder := form.New(c, form.Config{
+		Action: fmt.Sprintf("/%s", h.ResourceName),
+		Method: "POST",
 	})
 	return view.Render(c, fmt.Sprintf("pages/%s/create", h.ResourceName), fiber.Map{
 		"Title": "Create " + strings.Title(h.ResourceName),
-		"Form":  form,
+		"Form":  formBuilder,
 	})
 }
 
@@ -54,29 +52,18 @@ func (h *BaseHandler[T, CForm, UForm]) Store(c *fiber.Ctx) error {
 		return c.RedirectBack(fmt.Sprintf("/%s/create", h.ResourceName))
 	}
 
-	errors, err := builder.Validate(&formModel)
+	// Dahili form paketimizin Validate fonksiyonunu kullanıyoruz.
+	errors, err := form.Validate(&formModel)
 	if err != nil {
-		store := c.Locals("session_store").(*session.Store)
-		sess, _ := store.Get(c)
-		formValues, _ := c.FormValues()
-		sess.Set("errors", errors)
-		sess.Set("old_input", builder.ParseToOldInput(formValues))
-		sess.Save()
-		flash.Error(c, "Please check the form for errors.")
-		return c.Redirect(fmt.Sprintf("/%s/create", h.ResourceName))
+		// Hata varsa, merkezi FlashAndRedirect helper'ını kullanıyoruz.
+		return form.FlashAndRedirect(c, errors, fmt.Sprintf("/%s/create", h.ResourceName))
 	}
 
-	var dbModel T
-	// TODO: formModel'i dbModel'e map'leyen bir helper fonksiyonu gerekecek.
-	// Örneğin: mappers.Map(&formModel, &dbModel)
-	// Şimdilik basit bir varsayım yapalım:
-	reflect.ValueOf(&dbModel).Elem().FieldByName("Name").Set(reflect.ValueOf(formModel).Elem().FieldByName("Name"))
-	reflect.ValueOf(&dbModel).Elem().FieldByName("Email").Set(reflect.ValueOf(formModel).Elem().FieldByName("Email"))
-
-
-	if err := h.Service.Create(&dbModel); err != nil {
+	// Handler, veri dönüşümü yapmıyor.
+	// Doğrulanmış form struct'ını doğrudan servisin doğru metoduna gönderiyor.
+	if _, err := h.Service.CreateFromForm(&formModel); err != nil {
 		flash.Error(c, "Could not create record: "+err.Error())
-		return c.Redirect(fmt.Sprintf("/%s/create", h.ResourceName))
+		return form.FlashAndRedirect(c, nil, fmt.Sprintf("/%s/create", h.ResourceName))
 	}
 
 	flash.Success(c, strings.Title(h.ResourceName)+" created successfully.")
@@ -104,16 +91,16 @@ func (h *BaseHandler[T, CForm, UForm]) Edit(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	}
 
-	form := builder.New(builder.Config{
-		Action:    fmt.Sprintf("/%s/%d", h.ResourceName, id),
-		Method:    "PUT",
-		CSRFToken: c.Locals("csrf").(string),
-		Model:     record,
+	// `form.New` artık modeli alıp `oldInput` mantığını kendi içinde yönetiyor.
+	formBuilder := form.New(c, form.Config{
+		Action: fmt.Sprintf("/%s/%d", h.ResourceName, id),
+		Method: "PUT",
+		Model:  record,
 	})
 
 	return view.Render(c, fmt.Sprintf("pages/%s/edit", h.ResourceName), fiber.Map{
 		"Title":  "Edit " + strings.Title(h.ResourceName),
-		"Form":   form,
+		"Form":   formBuilder,
 		"Record": record,
 	})
 }
@@ -127,27 +114,15 @@ func (h *BaseHandler[T, CForm, UForm]) Update(c *fiber.Ctx) error {
 		return c.RedirectBack(fmt.Sprintf("/%s/%d/edit", h.ResourceName, id))
 	}
 
-	errors, err := builder.Validate(&formModel)
+	errors, err := form.Validate(&formModel)
 	if err != nil {
-		store := c.Locals("session_store").(*session.Store)
-		sess, _ := store.Get(c)
-		formValues, _ := c.FormValues()
-		sess.Set("errors", errors)
-		sess.Set("old_input", builder.ParseToOldInput(formValues))
-		sess.Save()
-		flash.Error(c, "Please check the form for errors.")
-		return c.Redirect(fmt.Sprintf("/%s/%d/edit", h.ResourceName, id))
+		return form.FlashAndRedirect(c, errors, fmt.Sprintf("/%s/%d/edit", h.ResourceName, id))
 	}
 	
-	var dbModel T
-	// TODO: formModel -> dbModel mapping
-	reflect.ValueOf(&dbModel).Elem().FieldByName("Name").Set(reflect.ValueOf(formModel).Elem().FieldByName("Name"))
-	reflect.ValueOf(&dbModel).Elem().FieldByName("Email").Set(reflect.ValueOf(formModel).Elem().FieldByName("Email"))
-
-
-	if _, err := h.Service.Update(uint(id), &dbModel); err != nil {
+	// Handler, doğrulanmış formu doğrudan servise gönderiyor.
+	if _, err := h.Service.UpdateFromForm(uint(id), &formModel); err != nil {
 		flash.Error(c, "Could not update record: "+err.Error())
-		return c.Redirect(fmt.Sprintf("/%s/%d/edit", h.ResourceName, id))
+		return form.FlashAndRedirect(c, nil, fmt.Sprintf("/%s/%d/edit", h.ResourceName, id))
 	}
 
 	flash.Success(c, strings.Title(h.ResourceName)+" updated successfully.")
@@ -157,12 +132,10 @@ func (h *BaseHandler[T, CForm, UForm]) Update(c *fiber.Ctx) error {
 // Destroy, bir kaydı siler.
 func (h *BaseHandler[T, CForm, UForm]) Destroy(c *fiber.Ctx) error {
 	id, _ := c.ParamsInt("id")
-
 	if err := h.Service.Delete(uint(id)); err != nil {
 		flash.Error(c, "Could not delete record: "+err.Error())
 		return c.RedirectBack(fmt.Sprintf("/%s", h.ResourceName))
 	}
-
 	flash.Success(c, strings.Title(h.ResourceName)+" deleted successfully.")
 	return c.Redirect("/" + h.ResourceName)
 }
