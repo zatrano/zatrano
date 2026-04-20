@@ -21,8 +21,6 @@
 [![AWS SDK](https://img.shields.io/badge/AWS-S3%20SDK-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)](https://aws.amazon.com/sdk-for-go/)
 [![OAuth2](https://img.shields.io/badge/OAuth2-x--oauth2-4285F4?style=for-the-badge)](https://pkg.go.dev/golang.org/x/oauth2)
 
-**Çoklu veritabanı (GORM + `zatrano db migrate`):** PostgreSQL (varsayılan) · MySQL · SQLite · SQL Server — `database_driver` + `database_url`; sürücü başına gömülü SQL: [`pkg/migrations/sql/`](pkg/migrations/sql/).
-
 </div>
 
 ---
@@ -33,7 +31,7 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 
 - **Modül yolu:** `github.com/zatrano/zatrano`
 - **Go:** 1.25+
-- **Çekirdek yığın:** Fiber v3, **PostgreSQL / MySQL / SQLite / SQL Server** (`database_driver` + GORM), Redis, GORM, Zap, **golang-migrate** (sürücüye özel gömülü SQL: `pkg/migrations/sql/<sürücü>/`, `migrations_source`), OpenAPI; isteğe bağlı GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
+- **Çekirdek yığın:** Fiber v3, GORM + ilişkisel veritabanları ([Veritabanı](#veritabanı)), Redis, Zap, **golang-migrate**, OpenAPI; isteğe bağlı GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
 
 > **Durum:** aktif geliştirme. Genel Go API’leri **`pkg/`** altındadır; platform üzerine kurulan uygulamalar bu sözleşmeleri import eder.
 
@@ -48,6 +46,7 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 - [Özellikler](#özellikler-yol-haritası)
 - [Dizilim](#dizilim-pkg-ve-internal)
 - [Gereksinimler](#gereksinimler)
+- [Veritabanı](#veritabanı)
 - [Kurulum](#kurulum)
 - [Hızlı Başlangıç](#hızlı-başlangıç)
 - [CLI Komutları](#cli-komutları)
@@ -123,9 +122,32 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 ## Gereksinimler
 
 - Go **1.25.0+**
-- **Bir veritabanı** — GORM ve `zatrano db migrate` için **PostgreSQL** (varsayılan), **MySQL**, **SQLite** veya **SQL Server** (`database_driver` + `database_url`; bkz. `pkg/database`, `config/examples/dev.yaml`)
+- **Bir veritabanı** — GORM ve `zatrano db migrate` için bkz. [Veritabanı](#veritabanı)
 - **Redis** — oturum + CSRF için (yerelde isteğe bağlı; prod'da genelde zorunlu)
 - **PostgreSQL istemci araçları** — `zatrano db backup` ve `db restore` yalnızca Postgres yedeği için: `pg_dump`, `pg_restore`, `psql` PATH'te olmalı
+
+---
+
+## Veritabanı
+
+Kalıcı katman **GORM** (`pkg/database`) ile bağlanır; şema değişiklikleri **`zatrano db migrate`** / **`db rollback`** ile **golang-migrate** üzerinden uygulanır.
+
+### Desteklenen motorlar
+
+| Motor | Yapılandırma (`database_driver`) | Not |
+|--------|-------------------------------------|-----|
+| **PostgreSQL** | `postgres` (boş / varsayılan) | Birincil geliştirme hedefi |
+| **MySQL** | `mysql` | |
+| **SQLite** | `sqlite` | Yerel araçlar ve testler için uygun |
+| **SQL Server** | `sqlserver` | `database_url` için `go-mssqldb` dokümantasyonundaki `sqlserver://` biçimi |
+
+**`database_driver`** ve **`database_url`** değerlerini YAML veya ortam değişkenleriyle verin. Örnekler: **`config/examples/dev.yaml`**; doğrulama ve normalizasyon: **`pkg/config`**.
+
+### Migrasyon SQL düzeni
+
+Sürücü başına sürümlü **`*.up.sql`** / **`*.down.sql`** dosyaları **[`pkg/migrations/sql/`](pkg/migrations/sql/)** altında (`postgres/`, `mysql/`, `sqlite/`, `sqlserver/`). **`migrations_source: embed`** (varsayılan) iken CLI, yapılandırılan sürücüye ait gömülü ağacı kullanır. **`migrations_source: file`** ve **`migrations_dir`** ile disk üzerindeki migrasyonları okuyabilirsiniz (iskelet uygulamalarda yaygın); **`db migrate`** / **`db rollback`** / **`db tenants …`** komutlarında **`--migrations <dizin>`** yalnızca o çağrı için dizin seçer.
+
+**`migrations_source`**, tohumlar ve **`zatrano gen model`** yolları için bkz. [Yapılandırma](#yapılandırma) altındaki **[Veritabanı migrasyonları (SQL)](#veritabanı-migrasyonları-sql)**.
 
 ---
 
@@ -162,7 +184,7 @@ cp config/examples/dev.yaml config/dev.yaml
 cp .env.example .env
 ```
 
-**`DATABASE_URL`** (ve isteğe **`DATABASE_DRIVER`**) ayarlandıktan sonra şemayı uygulayın (varsayılan **gömülü** migrasyonlar — `migrations_source: embed`):
+**`DATABASE_URL`** (ve isteğe **`DATABASE_DRIVER`**; bkz. [Veritabanı](#veritabanı)) ayarlandıktan sonra şemayı uygulayın (varsayılan **gömülü** migrasyonlar — `migrations_source: embed`):
 
 ```bash
 zatrano db migrate --env dev --config-dir config
@@ -1608,6 +1630,8 @@ view:
 - Ayrıntı: `migrations_source`, `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, `security.*`, `oauth.*` — `config/examples/dev.yaml`.
 
 ### Veritabanı migrasyonları (SQL)
+
+Desteklenen motorlar, **`database_driver`** ve **`database_url`** için bkz. **[Veritabanı](#veritabanı)**.
 
 - **`migrations_source`:** **`embed`** (varsayılan) — sürüm numaralı `*.up.sql` / `*.down.sql` dosyaları **`pkg/migrations/sql/<sürücü>/`** altında (`postgres`, `mysql`, `sqlite`, `sqlserver`). `zatrano db migrate`, **golang-migrate** + **`embed`/`iofs`** kaynağı ve **`database_driver`** ile aynı sürücüyü kullanır.
 - **`file`** — migrasyonları diskteki **`migrations_dir`** dizininden okur (**`zatrano new`** / scaffold projelerinde genelde `migrations_source: file` ve kök `migrations/`).

@@ -21,8 +21,6 @@
 [![AWS SDK](https://img.shields.io/badge/AWS-S3%20SDK-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)](https://aws.amazon.com/sdk-for-go/)
 [![OAuth2](https://img.shields.io/badge/OAuth2-x--oauth2-4285F4?style=for-the-badge)](https://pkg.go.dev/golang.org/x/oauth2)
 
-**Multi-database (GORM + `zatrano db migrate`):** PostgreSQL (default) · MySQL · SQLite · SQL Server — set `database_driver` + `database_url`; embedded SQL per engine under [`pkg/migrations/sql/`](pkg/migrations/sql/).
-
 </div>
 
 ---
@@ -33,7 +31,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 
 - **Module path:** `github.com/zatrano/zatrano`
 - **Go:** 1.25+
-- **Core stack:** Fiber v3, **PostgreSQL / MySQL / SQLite / SQL Server** (via `database_driver` + GORM), Redis, GORM, Zap, **golang-migrate** (embedded **driver-specific** SQL under `pkg/migrations/sql/<driver>/`, configurable `migrations_source`), OpenAPI; optional GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
+- **Core stack:** Fiber v3, GORM + relational databases ([Database](#database)), Redis, Zap, **golang-migrate**, OpenAPI; optional GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
 
 > **Status:** active development. Public Go APIs live under **`pkg/`** so applications built on the platform import stable platform contracts.
 
@@ -48,6 +46,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 - [Features](#features-roadmap)
 - [Layout](#layout-pkg-vs-internal)
 - [Requirements](#requirements)
+- [Database](#database)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [CLI Commands](#cli-commands)
@@ -124,9 +123,32 @@ Generated apps use **`zatrano.Start`** with **`RegisterRoutes: routes.Register`*
 ## Requirements
 
 - Go **1.25.0** or newer
-- **A database** for GORM and `zatrano db migrate` — **PostgreSQL** (default), **MySQL**, **SQLite**, or **SQL Server** (`database_driver` + `database_url`; see `pkg/database` and `config/examples/dev.yaml`)
+- **A database** for GORM and `zatrano db migrate` — see [Database](#database)
 - **Redis** for session + CSRF (optional locally; required when you turn on `redis_url` / production sessions)
 - **PostgreSQL client tools** (`pg_dump`, `pg_restore`, `psql`) on PATH for `zatrano db backup` and `db restore`
+
+---
+
+## Database
+
+ZATRANO connects with **GORM** (`pkg/database`) and applies schema changes with **`zatrano db migrate`** / **`db rollback`** using **golang-migrate**.
+
+### Supported engines
+
+| Engine | Config (`database_driver`) | Notes |
+|--------|---------------------------|--------|
+| **PostgreSQL** | `postgres` (default when unset / empty) | Primary development target |
+| **MySQL** | `mysql` | |
+| **SQLite** | `sqlite` | Handy for local tools and tests |
+| **SQL Server** | `sqlserver` | URL must use the `sqlserver://` form expected by `go-mssqldb` |
+
+Set **`database_driver`** and **`database_url`** in YAML or environment variables. Examples live in **`config/examples/dev.yaml`**; validation and normalization are in **`pkg/config`**.
+
+### Migration SQL layout
+
+Versioned **`*.up.sql`** / **`*.down.sql`** for each engine live under **[`pkg/migrations/sql/`](pkg/migrations/sql/)** (`postgres/`, `mysql/`, `sqlite/`, `sqlserver/`). With **`migrations_source: embed`** (default), the CLI uses the embedded tree for the configured driver. Use **`migrations_source: file`** and **`migrations_dir`** for on-disk migrations (typical for scaffolded apps), or **`--migrations <dir>`** on **`db migrate`** / **`db rollback`** / **`db tenants …`** to point at a folder for that run only.
+
+For **`migrations_source`**, seeds, and **`zatrano gen model`** paths, see **[Database migrations (SQL)](#database-migrations-sql)** under [Configuration](#configuration).
 
 ---
 
@@ -163,7 +185,7 @@ cp config/examples/dev.yaml config/dev.yaml
 cp .env.example .env
 ```
 
-After **`DATABASE_URL`** (and optional **`DATABASE_DRIVER`**) are set, apply the built-in schema (defaults to **embedded** migrations — `migrations_source: embed`):
+After **`DATABASE_URL`** (and optional **`DATABASE_DRIVER`**; see [Database](#database)), apply the built-in schema (defaults to **embedded** migrations — `migrations_source: embed`):
 
 ```bash
 zatrano db migrate --env dev --config-dir config
@@ -1662,6 +1684,8 @@ view:
 - Key fields: `migrations_source`, `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, `security.*`, `oauth.*` (see `config/examples/dev.yaml`).
 
 ### Database migrations (SQL)
+
+Supported engines, **`database_driver`**, and **`database_url`** are described in **[Database](#database)**.
 
 - **`migrations_source`:** **`embed`** (default) — versioned `*.up.sql` / `*.down.sql` live under **`pkg/migrations/sql/<driver>/`** (`postgres`, `mysql`, `sqlite`, `sqlserver`). `zatrano db migrate` uses **golang-migrate** with an **`embed`/`iofs`** source and the same driver you set with **`database_driver`**.
 - **`file`** — read migrations from **`migrations_dir`** on disk (typical for **`zatrano new`** / scaffolded apps, which set `migrations_source: file` and ship starter SQL under `migrations/`).
