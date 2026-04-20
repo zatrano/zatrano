@@ -10,6 +10,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+<br>
 [![GORM](https://img.shields.io/badge/GORM-632CA6?style=for-the-badge)](https://gorm.io/)
 [![Zap](https://img.shields.io/badge/Zap-yapılandırılmış%20log-121212?style=for-the-badge)](https://github.com/uber-go/zap)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white)](https://www.openapis.org/)
@@ -25,15 +26,41 @@
 
 ---
 
-**ZATRANO**, Go için **bir web framework’ü değil**; uçtan uca bir **backend platform ekosistemidir**: HTTP çalışma zamanı, güvenlik ve kimlik doğrulama, veri erişimi, önbellek ve kuyruk, e-posta ve olaylar, üretken **kod jeneratörleri** ve **CLI** tek çatı altında birleşir. Amaç; **modüler monolit** veya servis tarzı backend’leri **aynı dilde** üretmek, yapılandırmak, migrate etmek ve işletmektir.
+## Genel bakış
 
-Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulmaz: üretim öncesi kütüphaneler (Fiber, GORM, Redis, Zap, OpenAPI, gqlgen, golang-migrate, …) üzerine oturan **ürün katmanı** ve **araç zinciri** sunar.
+### ZATRANO nedir?
 
-- **Modül yolu:** `github.com/zatrano/zatrano`
-- **Go:** 1.25+
-- **Çekirdek yığın:** Fiber v3, GORM + ilişkisel veritabanları ([Veritabanı](#veritabanı)), Redis, Zap, **golang-migrate**, OpenAPI; isteğe bağlı GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
+**ZATRANO**, Go için **uçtan uca bir backend platformudur**: yalnızca HTTP yanıtı veren ince bir katman değil; **güvenlik ve kimlik**, **ilişkisel veri** (GORM, çoklu SQL motoru, migrasyonlar), **Redis** ile oturum / önbellek / kuyruk desenleri, **e-posta ve bildirimler**, **olaylar**, **isteğe bağlı GraphQL**, **OpenAPI** dokümantasyonu, **çok kiracılık**, **denetim (audit)**, **özellik bayrakları**, **yayın (WebSocket/SSE)** gibi alt sistemleri **aynı çatı ve aynı kurallar** altında sunar.
 
-> **Durum:** aktif geliştirme. Genel Go API’leri **`pkg/`** altındadır; platform üzerine kurulan uygulamalar bu sözleşmeleri import eder.
+Buna ek olarak **CLI** (`zatrano`) ve **kod üreticileri** vardır: modül, CRUD, görünüm, job, policy ve wire işaretleriyle ekip genelinde **tekrarlanabilir iskelet** ve tutarlı dizin yapısı elde edilir.
+
+Uygulama kodunun import ettiği yüzey **`pkg/`** altındadır. Bu depoda ayrıca **`internal/cli`**, **`internal/gen`** ve **`zatrano db migrate`** ile uygulanan **gömülü SQL migrasyonları** bulunur.
+
+### Ne değildir?
+
+| | |
+|---|-----|
+| **Mini framework değildir** | Hazır **varsayılanlar ve görüşler** (oturum/CSRF, RBAC yapı taşları, migrasyon düzeni, OpenAPI + Scalar vb.) gelir. Amaç boş bir router sunmak değil; **hız ve tutarlılık**dır. |
+| **İş kurallarınızın yerine geçmez** | **Handler → Service → Repository** yapısı ve çapraz kesen servisler sunulur; **domain mantığı**, aggregate’ler ve dış entegrasyonlar sizdedir. |
+| **Mikroservis çatısı değildir** | **Modüler monolit** ve iyi ayrıştırılmış HTTP servisleri hedeflenir; service mesh veya dağıtım modeli dayatılmaz. |
+
+### Nasıl kullanılır?
+
+1. **Platformu gömün** — `github.com/zatrano/zatrano` bağımlılığı, **`pkg/config`** + **`pkg/core`** ile önyükleme, rotalar için **`zatrano.Start`** (özel rota yoksa **`zatrano.Run()`**).
+2. **Üretin ve bağlayın** — **`zatrano new`** / **`zatrano gen …`** ve `zatrano:wire` işaretleriyle modüllerin tek yerden kaydı.
+3. **İşletin** — **`zatrano db migrate`**, **`doctor`**, **`config validate`**, sağlık uçları ve aşağıdaki bölümlerden kuyruk, kiracı, yedekleme vb.
+
+### Özet tablo
+
+| | |
+|---|---|
+| **Modül** | `github.com/zatrano/zatrano` |
+| **Go** | 1.25+ |
+| **HTTP ve API** | Fiber v3, OpenAPI 3, isteğe bağlı GraphQL (gqlgen) |
+| **Veri** | GORM + desteklenen SQL motorları ([Veritabanı](#veritabanı)); **golang-migrate** (`zatrano db migrate` / `rollback`) |
+| **Altyapı desenleri** | Redis (oturum, önbellek, kuyruk), Zap, isteğe bağlı AWS S3 SDK, OAuth2 (`x/oauth2`) |
+
+> **Durum:** Aktif geliştirme. Platform üzerine kurulan uygulamalar için **kararlı yüzey** olarak **`pkg/`** kabul edin.
 
 ### Geliştirici
 
@@ -43,6 +70,7 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 
 ## İçindekiler
 
+- [Genel bakış](#genel-bakış)
 - [Özellikler](#özellikler-yol-haritası)
 - [Dizilim](#dizilim-pkg-ve-internal)
 - [Gereksinimler](#gereksinimler)

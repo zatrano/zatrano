@@ -10,6 +10,7 @@
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+<br>
 [![GORM](https://img.shields.io/badge/GORM-632CA6?style=for-the-badge)](https://gorm.io/)
 [![Zap](https://img.shields.io/badge/Zap-structured%20logs-121212?style=for-the-badge)](https://github.com/uber-go/zap)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white)](https://www.openapis.org/)
@@ -25,15 +26,41 @@
 
 ---
 
-**ZATRANO** is a **backend platform ecosystem** for Go: **not a minimalist web framework**, but an integrated **product layer**—HTTP runtime, security & auth, persistence, cache & queues, mail & events, observability-oriented defaults, **code generators**, and a **CLI**—so you ship **modular monoliths** or service-style backends with one coherent way to **scaffold**, **configure**, **migrate**, and **operate** applications.
+## Overview
 
-It is intentionally **more than “Fiber + middleware”**: the repo encodes opinions and automation across the lifecycle, while still composing industry-standard libraries (Fiber, GORM, Redis, Zap, OpenAPI, gqlgen, golang-migrate, …).
+### What ZATRANO is
 
-- **Module path:** `github.com/zatrano/zatrano`
-- **Go:** 1.25+
-- **Core stack:** Fiber v3, GORM + relational databases ([Database](#database)), Redis, Zap, **golang-migrate**, OpenAPI; optional GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
+**ZATRANO** is a **Go backend platform**: a curated stack, shared conventions, and tooling so you can ship **modular monoliths** or **HTTP-centric services** without reinventing the same infrastructure in every repo. It is an **integrated product layer**—not only an HTTP server—covering **security & auth**, **relational data** (GORM, multi-engine SQL, migrations), **Redis-backed** cache/queue/session patterns, **mail & notifications**, **events**, **optional GraphQL**, **OpenAPI** docs, **multi-tenancy**, **audit**, **feature flags**, **broadcasting**, and more.
 
-> **Status:** active development. Public Go APIs live under **`pkg/`** so applications built on the platform import stable platform contracts.
+You also get a **first-class CLI** (`zatrano`) and **code generators** that scaffold modules, CRUD, views, jobs, policies, and wire markers so the whole team follows the same layout.
+
+The surface you import from application code lives under **`pkg/`**. This repository additionally contains **`internal/cli`**, **`internal/gen`**, and **embedded SQL migrations** applied with **`zatrano db migrate`**.
+
+### What it is not
+
+| | |
+|---|-----|
+| **Not** a “tiny framework” | You adopt **opinions and defaults** (sessions/CSRF, RBAC primitives, migration layout, OpenAPI + Scalar, etc.). The goal is velocity and consistency—not a blank router. |
+| **Not** your domain layer | It gives **structure** (handler → service → repository), cross-cutting services, and templates—you still own **business rules**, aggregates, and integrations. |
+| **Not** a microservices toolkit | It targets **modular monoliths** and **well-factored services**; it does not prescribe service mesh, orchestration, or split deployments. |
+
+### How you work with it
+
+1. **Embed the platform** — depend on `github.com/zatrano/zatrano`, bootstrap with **`pkg/config`** + **`pkg/core`**, mount routes via **`zatrano.Start`** (or run the stock server with **`zatrano.Run()`** when you have no custom routes).
+2. **Generate and wire** — use **`zatrano new`** / **`zatrano gen …`** and the `zatrano:wire` markers so modules register in one place.
+3. **Operate** — use **`zatrano db migrate`**, **`doctor`**, **`config validate`**, health endpoints, and the feature sections below for queues, tenants, mail, and backups.
+
+### Stack at a glance
+
+| | |
+|---|---|
+| **Module** | `github.com/zatrano/zatrano` |
+| **Go** | 1.25+ |
+| **HTTP & APIs** | Fiber v3, OpenAPI 3, optional GraphQL (gqlgen) |
+| **Data** | GORM + supported SQL engines ([Database](#database)); **golang-migrate** via `zatrano db migrate` / `rollback` |
+| **Infrastructure patterns** | Redis (sessions, cache, queues), Zap structured logs, optional AWS S3 SDK, OAuth2 (`x/oauth2`) |
+
+> **Status:** Active development. Treat **`pkg/`** as the public API for applications built on the platform.
 
 ### Maintainer
 
@@ -43,6 +70,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 
 ## Table of Contents
 
+- [Overview](#overview)
 - [Features](#features-roadmap)
 - [Layout](#layout-pkg-vs-internal)
 - [Requirements](#requirements)
