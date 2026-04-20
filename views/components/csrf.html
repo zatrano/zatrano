@@ -1,0 +1,9 @@
+{{- /*
+  Component: csrf
+  Renders a hidden CSRF token input field.
+  Usage: {{template "components/csrf" .}}
+  Requires .CSRF to be set in template data (injected by renderer.ViewData).
+*/ -}}
+{{define "components/csrf"}}
+<input type="hidden" name="_csrf" value="{{.CSRF}}">
+{{end}}

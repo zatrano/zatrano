@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{block "title" .}}{{if .Title}}{{.Title}} — {{end}}ZATRANO{{end}}</title>
+  <meta name="csrf-token" content="{{.CSRF}}">
+  {{block "meta" .}}{{end}}
+  {{assetLink "app.css"}}
+  {{block "styles" .}}{{end}}
+</head>
+<body class="{{block "body-class" .}}{{end}}">
+
+  {{block "header" .}}
+  <header class="site-header">
+    <nav class="navbar">
+      <a class="navbar-brand" href="/">{{if .AppName}}{{.AppName}}{{else}}ZATRANO{{end}}</a>
+      {{block "nav" .}}{{end}}
+    </nav>
+  </header>
+  {{end}}
+
+  <main class="site-main" id="main-content">
+    {{template "partials/flash-messages" .}}
+    {{block "content" .}}{{end}}
+  </main>
+
+  {{block "footer" .}}
+  <footer class="site-footer">
+    <p>&copy; {{.AppName}}</p>
+  </footer>
+  {{end}}
+
+  {{assetScript "app.js"}}
+  {{block "scripts" .}}{{end}}
+
+  {{/* CSRF token as JS global for fetch/axios calls */}}
+  <script>
+    window.__CSRF__ = "{{.CSRF}}";
+  </script>
+</body>
+</html>

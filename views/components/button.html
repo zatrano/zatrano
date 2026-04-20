@@ -1,0 +1,18 @@
+{{- /*
+  Component: button
+  Usage: {{template "components/button" .}}
+  Expected data fields:
+    .Label   string — button text
+    .Type    string — submit | button | reset (default: button)
+    .Variant string — primary | secondary | danger | ghost (default: primary)
+    .Class   string — additional CSS classes (optional)
+    .Attrs   string — extra HTML attributes (optional, e.g. "disabled id=\"save\"")
+*/ -}}
+{{define "components/button"}}
+<button
+  type="{{if .Type}}{{.Type}}{{else}}button{{end}}"
+  class="btn btn-{{if .Variant}}{{.Variant}}{{else}}primary{{end}}{{if .Class}} {{.Class}}{{end}}"
+  {{if .Attrs}}{{safe .Attrs}}{{end}}>
+  {{.Label}}
+</button>
+{{end}}

@@ -1,0 +1,14 @@
+{{- /*
+  Partial: flash-messages
+  Renders all flash messages passed via .Flash ([]flash.Message).
+  Include in layouts or views: {{template "partials/flash-messages" .}}
+*/ -}}
+{{define "partials/flash-messages"}}
+{{if .Flash}}
+<div class="flash-container" aria-live="polite">
+  {{range .Flash}}
+    {{template "components/alert" .}}
+  {{end}}
+</div>
+{{end}}
+{{end}}

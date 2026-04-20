@@ -1,0 +1,4 @@
+# Root GraphQL schema (extend with more .graphqls files or zatrano gen graphql <Model>).
+type Query {
+  ping: String!
+}

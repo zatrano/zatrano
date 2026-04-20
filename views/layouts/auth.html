@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{block "title" .}}{{if .Title}}{{.Title}} — {{end}}ZATRANO{{end}}</title>
+  <meta name="csrf-token" content="{{.CSRF}}">
+  {{assetLink "app.css"}}
+  {{block "styles" .}}{{end}}
+</head>
+<body class="auth-layout">
+  <div class="auth-container">
+    <div class="auth-card">
+      {{block "brand" .}}
+      <div class="auth-brand">
+        <a href="/">{{if .AppName}}{{.AppName}}{{else}}ZATRANO{{end}}</a>
+      </div>
+      {{end}}
+
+      {{template "partials/flash-messages" .}}
+
+      {{block "content" .}}{{end}}
+    </div>
+  </div>
+
+  {{assetScript "app.js"}}
+  {{block "scripts" .}}{{end}}
+</body>
+</html>

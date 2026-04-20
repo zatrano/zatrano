@@ -1,0 +1,97 @@
+# Storage Configuration Example
+# Place this in your config file (e.g., config/app.yaml or config/dev.yaml)
+
+storage:
+  # Driver type: "local", "s3", "minio", "r2"
+  driver: local
+
+  # Local disk configuration
+  local:
+    # Root directory for storing files
+    root: storage/app
+    # Where public files are symlinked to (within public/ directory)
+    public_root: public/storage
+    # URL prefix for accessing public files
+    public_url: /storage
+
+  # S3-compatible storage configuration
+  s3:
+    # AWS region (or region for S3-compatible service)
+    region: us-east-1
+    # S3 bucket name
+    bucket: my-app-uploads
+    # Custom endpoint (leave empty for AWS S3)
+    # MinIO:     https://minio.example.com:9000
+    # Cloudflare R2: https://your-account.r2.cloudflarestorage.com
+    endpoint: ""
+    # AWS/S3 credentials
+    access_key: "${AWS_ACCESS_KEY_ID}"
+    secret_key: "${AWS_SECRET_ACCESS_KEY}"
+    # Custom public URL (optional)
+    # If not set, will use default S3 URL format
+    public_url: https://cdn.example.com/uploads
+    # Use path-style URLs (required for MinIO)
+    # true: https://s3.amazonaws.com/bucket/key
+    # false: https://bucket.s3.amazonaws.com/key (default for AWS)
+    use_path_style: false
+
+  # Private storage (not accessible via web)
+  private:
+    enabled: true
+    root: storage/private
+
+# Example configurations for different environments:
+
+# --- Development (local file storage) ---
+# storage:
+#   driver: local
+#   local:
+#     root: storage/app
+#     public_root: public/storage
+#     public_url: /storage
+#   private:
+#     enabled: true
+#     root: storage/private
+
+# --- Production (AWS S3) ---
+# storage:
+#   driver: s3
+#   s3:
+#     region: us-west-2
+#     bucket: my-app-prod-uploads
+#     endpoint: ""
+#     access_key: "${AWS_ACCESS_KEY_ID}"
+#     secret_key: "${AWS_SECRET_ACCESS_KEY}"
+#     public_url: https://uploads.myapp.com
+#   private:
+#     enabled: true
+#     root: storage/private
+
+# --- MinIO (local S3-compatible) ---
+# storage:
+#   driver: s3
+#   s3:
+#     region: minio
+#     bucket: uploads
+#     endpoint: https://localhost:9000
+#     access_key: minioadmin
+#     secret_key: minioadmin
+#     use_path_style: true
+#   private:
+#     enabled: true
+#     root: storage/private
+
+# --- Cloudflare R2 ---
+# storage:
+#   driver: s3
+#   s3:
+#     region: us-west-2
+#     bucket: my-bucket
+#     endpoint: https://your-account.r2.cloudflarestorage.com
+#     access_key: "${R2_ACCESS_KEY_ID}"
+#     secret_key: "${R2_SECRET_ACCESS_KEY}"
+#     use_path_style: true
+#     public_url: https://cdn.example.com
+#   private:
+#     enabled: true
+#     root: storage/private

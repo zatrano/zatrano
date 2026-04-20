@@ -1,0 +1,38 @@
+{{- /*
+  Component: form-textarea
+  Usage: {{template "components/form-textarea" .}}
+  Expected data fields:
+    .Name        string — textarea name attribute
+    .Label       string — visible label text
+    .Value       string — current value
+    .Placeholder string — placeholder text (optional)
+    .Rows        int    — number of visible rows (default: 4)
+    .Required    bool   — marks field as required
+    .Error       string — validation error (optional)
+    .Hint        string — helper text (optional)
+    .Class       string — extra wrapper CSS classes (optional)
+    .Attrs       string — extra raw HTML attributes (optional)
+*/ -}}
+{{define "components/form-textarea"}}
+<div class="form-group{{if .Error}} has-error{{end}}{{if .Class}} {{.Class}}{{end}}">
+  {{if .Label}}
+  <label for="textarea-{{.Name}}" class="form-label">
+    {{.Label}}{{if .Required}}<span class="required" aria-hidden="true">*</span>{{end}}
+  </label>
+  {{end}}
+  <textarea
+    id="textarea-{{.Name}}"
+    name="{{.Name}}"
+    rows="{{if .Rows}}{{.Rows}}{{else}}4{{end}}"
+    {{if .Placeholder}}placeholder="{{.Placeholder}}"{{end}}
+    {{if .Required}}required{{end}}
+    class="form-control{{if .Error}} is-invalid{{end}}"
+    {{if .Attrs}}{{safe .Attrs}}{{end}}
+  >{{.Value}}</textarea>
+  {{if .Error}}
+  <p class="form-error" role="alert">{{.Error}}</p>
+  {{else if .Hint}}
+  <p class="form-hint">{{.Hint}}</p>
+  {{end}}
+</div>
+{{end}}

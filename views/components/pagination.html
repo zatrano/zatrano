@@ -1,0 +1,44 @@
+{{- /*
+  Component: pagination
+  Usage: {{template "components/pagination" .}}
+  Expected data fields:
+    .CurrentPage int    — active page number (1-based)
+    .TotalPages  int    — total number of pages
+    .BaseURL     string — URL prefix; page number appended as ?page=N
+*/ -}}
+{{define "components/pagination"}}
+{{if gt .TotalPages 1}}
+<nav class="pagination" aria-label="Sayfalama">
+  <ul class="pagination-list">
+
+    {{/* Previous */}}
+    <li class="pagination-item{{if le .CurrentPage 1}} disabled{{end}}">
+      {{if gt .CurrentPage 1}}
+        <a class="pagination-link" href="{{.BaseURL}}?page={{sub .CurrentPage 1}}" aria-label="Önceki">&laquo;</a>
+      {{else}}
+        <span class="pagination-link" aria-disabled="true">&laquo;</span>
+      {{end}}
+    </li>
+
+    {{/* Pages */}}
+    {{range iterate .TotalPages}}
+    {{$page := add . 1}}
+    <li class="pagination-item{{if eq $page $.CurrentPage}} active{{end}}">
+      <a class="pagination-link" href="{{$.BaseURL}}?page={{$page}}"
+        {{if eq $page $.CurrentPage}}aria-current="page"{{end}}>{{$page}}</a>
+    </li>
+    {{end}}
+
+    {{/* Next */}}
+    <li class="pagination-item{{if ge .CurrentPage .TotalPages}} disabled{{end}}">
+      {{if lt .CurrentPage .TotalPages}}
+        <a class="pagination-link" href="{{.BaseURL}}?page={{add .CurrentPage 1}}" aria-label="Sonraki">&raquo;</a>
+      {{else}}
+        <span class="pagination-link" aria-disabled="true">&raquo;</span>
+      {{end}}
+    </li>
+
+  </ul>
+</nav>
+{{end}}
+{{end}}

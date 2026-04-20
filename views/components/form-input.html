@@ -1,0 +1,39 @@
+{{- /*
+  Component: form-input
+  Usage: {{template "components/form-input" .}}
+  Expected data fields:
+    .Type        string — text | email | password | number | tel | url | date … (default: text)
+    .Name        string — input name attribute
+    .Label       string — visible label text
+    .Value       string — current value (use {{old "name" .Old}} to repopulate after validation)
+    .Placeholder string — placeholder text (optional)
+    .Required    bool   — adds required attribute and asterisk to label
+    .Error       string — validation error message shown below the field (optional)
+    .Class       string — extra CSS classes for the wrapper div (optional)
+    .Hint        string — helper text shown below input (optional)
+    .Attrs       string — additional raw HTML attributes (optional)
+*/ -}}
+{{define "components/form-input"}}
+<div class="form-group{{if .Error}} has-error{{end}}{{if .Class}} {{.Class}}{{end}}">
+  {{if .Label}}
+  <label for="input-{{.Name}}" class="form-label">
+    {{.Label}}{{if .Required}}<span class="required" aria-hidden="true">*</span>{{end}}
+  </label>
+  {{end}}
+  <input
+    type="{{if .Type}}{{.Type}}{{else}}text{{end}}"
+    id="input-{{.Name}}"
+    name="{{.Name}}"
+    value="{{.Value}}"
+    {{if .Placeholder}}placeholder="{{.Placeholder}}"{{end}}
+    {{if .Required}}required{{end}}
+    class="form-control{{if .Error}} is-invalid{{end}}"
+    {{if .Attrs}}{{safe .Attrs}}{{end}}
+  >
+  {{if .Error}}
+  <p class="form-error" role="alert">{{.Error}}</p>
+  {{else if .Hint}}
+  <p class="form-hint">{{.Hint}}</p>
+  {{end}}
+</div>
+{{end}}

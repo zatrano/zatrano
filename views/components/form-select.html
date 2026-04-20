@@ -1,0 +1,39 @@
+{{- /*
+  Component: form-select
+  Usage: {{template "components/form-select" .}}
+  Expected data fields:
+    .Name     string     — select name attribute
+    .Label    string     — visible label text
+    .Value    string     — currently selected value
+    .Options  [][2]string — slice of [value, label] pairs
+    .Required bool       — marks field as required
+    .Error    string     — validation error (optional)
+    .Hint     string     — helper text (optional)
+    .Class    string     — extra wrapper CSS classes (optional)
+    .Attrs    string     — extra raw HTML attributes on <select> (optional)
+*/ -}}
+{{define "components/form-select"}}
+<div class="form-group{{if .Error}} has-error{{end}}{{if .Class}} {{.Class}}{{end}}">
+  {{if .Label}}
+  <label for="select-{{.Name}}" class="form-label">
+    {{.Label}}{{if .Required}}<span class="required" aria-hidden="true">*</span>{{end}}
+  </label>
+  {{end}}
+  <select
+    id="select-{{.Name}}"
+    name="{{.Name}}"
+    {{if .Required}}required{{end}}
+    class="form-control form-select{{if .Error}} is-invalid{{end}}"
+    {{if .Attrs}}{{safe .Attrs}}{{end}}
+  >
+    {{range .Options}}
+    <option value="{{index . 0}}"{{if eq (index . 0) $.Value}} selected{{end}}>{{index . 1}}</option>
+    {{end}}
+  </select>
+  {{if .Error}}
+  <p class="form-error" role="alert">{{.Error}}</p>
+  {{else if .Hint}}
+  <p class="form-hint">{{.Hint}}</p>
+  {{end}}
+</div>
+{{end}}

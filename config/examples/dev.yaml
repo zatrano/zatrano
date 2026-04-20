@@ -1,0 +1,149 @@
+# Example profile: copy to config/dev.yaml and adjust.
+# Environment variables override these keys (see pkg/config).
+
+env: dev
+app_name: ZATRANO
+
+http_addr: ":8080"
+http_read_timeout: 30s
+
+# Optional Fiber middleware (see README → HTTP middleware).
+# http:
+#   cors_enabled: true
+#   cors_allow_origins:
+#     - http://localhost:5173
+#   cors_allow_headers: ["Authorization", "Content-Type", "X-Request-ID"]
+#   cors_allow_credentials: true
+#   rate_limit_enabled: true
+#   rate_limit_max: 120
+#   rate_limit_window: 1m
+#   rate_limit_redis: true   # requires redis_url; else in-memory per process
+#   request_timeout: 0       # e.g. 60s — per-handler deadline (0 = off)
+#   body_limit: 0            # max body bytes (0 = Fiber default 4 MiB)
+#   shutdown_timeout: 15s    # Fiber graceful shutdown max wait (0 = default 15s)
+#   graceful_restart: false  # Unix: tableflip + SIGUSR2 zero-downtime (needs real binary, not `go run`)
+#   graceful_restart_pid_file: ""  # optional PID file for systemd ExecReload patterns
+
+# Leave empty for local UI-only work; set DATABASE_URL when Postgres is up.
+database_url: ""
+database_required: false
+
+redis_url: ""
+redis_required: false
+
+log_level: info
+log_development: true
+
+migrations_dir: migrations
+seeds_dir: db/seeds
+openapi_path: api/openapi.yaml
+
+security:
+  session_enabled: true
+  csrf_enabled: true
+  csrf_skip_prefixes:
+    - /api/
+  jwt_secret: ""
+  jwt_issuer: zatrano
+  jwt_expiry: 60m
+  cookie_secure: false
+  demo_token_endpoint: false
+
+# OAuth2 browser login (requires redis_url + oauth.base_url + provider keys).
+# oauth:
+#   enabled: true
+#   base_url: http://127.0.0.1:8080
+#   providers:
+#     google:
+#       client_id: ""
+#       client_secret: ""
+#     github:
+#       client_id: ""
+#       client_secret: ""
+
+# Application i18n (JSON per locale under locales_dir). Copy repo `locales/*.json` or add your own.
+# i18n:
+#   enabled: true
+#   default_locale: en
+#   supported_locales: [en, tr]
+#   locales_dir: locales
+#   cookie_name: zatrano_lang
+#   query_key: lang
+
+static_path: public
+static_url_prefix: /static
+
+# Realtime: WebSocket hub + optional SSE (Pusher-style JSON). See README → Broadcasting.
+# broadcast:
+#   enabled: true
+#   path_prefix: /broadcast
+#   jwt_query_param: access_token
+#   sse_enabled: true
+#   allow_origins:
+#     - http://localhost:5173
+
+# Multi-tenancy (README → Multi-tenancy).
+# tenant:
+#   enabled: true
+#   mode: header              # header | subdomain
+#   header_name: X-Tenant-ID
+#   subdomain_suffix: ".app.local"
+#   required: false
+#   isolation: row            # row | schema
+#   row_column: tenant_id
+#   schema_prefix: tenant_
+
+# Audit / activity + HTTP request log (README → Audit / Activity log).
+# audit:
+#   enabled: true
+#   model_enabled: true
+#   http_enabled: true
+#   http_driver: db
+#   http_file_path: logs/http_audit.jsonl
+
+# Full-text: PostgreSQL scopes use search.postgres_fts_language (see README → Full-text search).
+# External index (Meilisearch / Typesense) + `zatrano search import <model>`:
+# search:
+#   enabled: true
+#   driver: meilisearch          # meilisearch | typesense
+#   default_index_prefix: zatrano_
+#   meilisearch_url: http://127.0.0.1:7700
+#   meilisearch_api_key: ""
+#   typesense_url: http://127.0.0.1:8108
+#   typesense_api_key: ""
+#   postgres_fts_language: simple   # regconfig for plainto_tsquery scopes (e.g. english, turkish)
+
+# GraphQL (README → GraphQL). gqlgen.yml + api/graphql/*.graphqls; codegen: go run github.com/99designs/gqlgen@v0.17.78 generate
+# graphql:
+#   enabled: true
+#   path: /graphql
+#   playground: true
+#   playground_path: /playground
+
+# Feature flags (README → Feature flags). Migration 000010_feature_flags.
+# features:
+#   enabled: true
+#   source: both              # config | db | both — DB row overrides YAML when both
+#   definitions:
+#     - key: beta-ui
+#       enabled: true
+
+# ─── View / Template Engine ──────────────────────────────────────────────────
+# view:
+#   root: views            # template root directory
+#   extension: .html       # template file extension
+#   components_dir: components  # sub-dir under root for reusable partials
+#   layouts_dir: layouts   # sub-dir under root for layout templates
+#   dev_mode: true         # disables template caching; hot-reloads on every request
+#
+#   asset:
+#     public_dir: public   # filesystem path for static asset files
+#     public_url: /public  # URL prefix used when building asset URLs
+#
+#     # Vite / esbuild integration — set vite_manifest to the build manifest path.
+#     # After `vite build`, asset URLs resolve to hashed filenames from the manifest.
+#     # vite_manifest: public/build/.vite/manifest.json
+#
+#     # Vite HMR dev server — when dev_mode is true and vite_dev_url is set,
+#     # {{asset "src/app.ts"}} proxies directly to the Vite dev server.
+#     # vite_dev_url: http://localhost:5173

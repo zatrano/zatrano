@@ -1,0 +1,18 @@
+# Schema-first GraphQL (gqlgen). Run after schema edits:
+#   go run github.com/99designs/gqlgen generate
+schema:
+  - api/graphql/*.graphqls
+
+exec:
+  filename: pkg/graphql/graph/generated.go
+  package: graph
+
+model:
+  filename: pkg/graphql/graph/models_gen.go
+  package: graph
+
+resolver:
+  layout: follow-schema
+  dir: pkg/graphql/graph
+  package: graph
+  type: Resolver
