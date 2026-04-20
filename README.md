@@ -6,17 +6,22 @@
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev/dl/)
 [![Fiber](https://img.shields.io/badge/Fiber-v3-00ACFF?style=for-the-badge)](https://github.com/gofiber/fiber)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![GORM](https://img.shields.io/badge/GORM-632CA6?style=for-the-badge)](https://gorm.io/)
 [![Zap](https://img.shields.io/badge/Zap-structured%20logs-121212?style=for-the-badge)](https://github.com/uber-go/zap)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white)](https://www.openapis.org/)
 [![GraphQL](https://img.shields.io/badge/GraphQL-E10098?style=for-the-badge&logo=graphql&logoColor=white)](https://graphql.org/)
 [![gqlgen](https://img.shields.io/badge/gqlgen-311C87?style=for-the-badge)](https://github.com/99designs/gqlgen)
-[![golang--migrate](https://img.shields.io/badge/golang--migrate-SQL-00599C?style=for-the-badge)](https://github.com/golang-migrate/migrate)
+[![golang-migrate](https://img.shields.io/badge/golang--migrate-SQL-00599C?style=for-the-badge)](https://github.com/golang-migrate/migrate)
 [![Cobra CLI](https://img.shields.io/badge/Cobra-CLI-7E43B6?style=for-the-badge)](https://github.com/spf13/cobra)
 [![Viper](https://img.shields.io/badge/Viper-config-273F5B?style=for-the-badge)](https://github.com/spf13/viper)
 [![AWS SDK](https://img.shields.io/badge/AWS-S3%20SDK-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)](https://aws.amazon.com/sdk-for-go/)
 [![OAuth2](https://img.shields.io/badge/OAuth2-x--oauth2-4285F4?style=for-the-badge)](https://pkg.go.dev/golang.org/x/oauth2)
+
+**Multi-database (GORM + `zatrano db migrate`):** PostgreSQL (default) · MySQL · SQLite · SQL Server — set `database_driver` + `database_url`; embedded SQL per engine under [`pkg/migrations/sql/`](pkg/migrations/sql/).
 
 </div>
 
@@ -95,7 +100,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 | **GraphQL** | **gqlgen** schema-first (`api/graphql/*.graphqls`, `gqlgen.yml`), **`/graphql`** via Fiber **`adaptor`**, optional **GraphiQL** playground, **`graph-gophers/dataloader`** hooks (**`Loaders`**, **`WithLoaders`**), **`zatrano gen graphql <Model>`** |
 | **Testing** | **HTTP test client** (Fiber.Test() wrapper, Get/Post/WithToken, AssertStatus/AssertJSON), **Database factory** (gofakeit-based test data, gen factory), **Transaction rollback** (TestSuite struct, SetupTest/TeardownTest), **In-memory cache driver** (no Redis required), **Mail fake** (captures emails in memory, assert sent), **Queue fake** (captures dispatched jobs, assert dispatched) |
 | Data | **Generic Repository** pattern, automated soft-deletes, **chainable Scopes**, Offset-based pagination |
-| DB / Ops | GORM + **`zatrano db migrate` / `rollback`** + **`db seed`** + **`db backup` / `restore`** |
+| DB / Ops | **PostgreSQL · MySQL · SQLite · SQL Server** (`database_driver` + GORM); **`zatrano db migrate` / `rollback`** (default **embed** SQL in **`pkg/migrations/sql/<driver>/`**), **`db seed`**, **`db backup` / `restore`** (Postgres CLI tools) |
 | **Storage** | **Local / S3 / MinIO / Cloudflare R2** drivers, **signed URLs**, **image processing** (resize, crop, thumbnail), **Fiber middleware**, public + private disks |
 | **HTTP Client** | Fluent JSON client with **WithToken**, **WithHeader**, **WithTimeout**, `Get`/`Post`/`Put`, automatic JSON marshal/unmarshal, retry on 5xx, and fake test transport |
 | Ops | `/health`, `/ready`, `/status` |

@@ -6,6 +6,9 @@
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev/dl/)
 [![Fiber](https://img.shields.io/badge/Fiber-v3-00ACFF?style=for-the-badge)](https://github.com/gofiber/fiber)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![GORM](https://img.shields.io/badge/GORM-632CA6?style=for-the-badge)](https://gorm.io/)
 [![Zap](https://img.shields.io/badge/Zap-yapılandırılmış%20log-121212?style=for-the-badge)](https://github.com/uber-go/zap)
@@ -17,6 +20,8 @@
 [![Viper](https://img.shields.io/badge/Viper-yapılandırma-273F5B?style=for-the-badge)](https://github.com/spf13/viper)
 [![AWS SDK](https://img.shields.io/badge/AWS-S3%20SDK-232F3E?style=for-the-badge&logo=amazonaws&logoColor=white)](https://aws.amazon.com/sdk-for-go/)
 [![OAuth2](https://img.shields.io/badge/OAuth2-x--oauth2-4285F4?style=for-the-badge)](https://pkg.go.dev/golang.org/x/oauth2)
+
+**Çoklu veritabanı (GORM + `zatrano db migrate`):** PostgreSQL (varsayılan) · MySQL · SQLite · SQL Server — `database_driver` + `database_url`; sürücü başına gömülü SQL: [`pkg/migrations/sql/`](pkg/migrations/sql/).
 
 </div>
 
@@ -83,7 +88,7 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 | Kimlik | **Oturum (Redis) + CSRF**; `/api/v1/private/*` için **JWT**; **OAuth2** (Google/GitHub) tarayıcı girişi; **RBAC** (rol→izin, DB destekli); **Gate/Policy** (kaynak bazlı yetkilendirme); **Şifre sıfırlama** / **e-posta doğrulama** (işlemsel e-posta **`pkg/notifications`** → **`mail`** kanalı, `App.Notifications` + `App.Mail`); **Brute Force Koruması** (IP+username rate limiting, Redis); **TOTP 2FA** (Google Authenticator uyumlu, QR kod üretimi); **Oturum Yönetimi** (aktif oturumları listele/sonlandır, cihaz bilgisi); **JWT Refresh Token'ları** (token rotasyonu, refresh token tablosu) |
 | **Test Altyapısı** | **HTTP test client** (Fiber.Test() sarmalama, Get/Post/WithToken, AssertStatus/AssertJSON), **Database factory** (gofakeit tabanlı test verisi üretimi, gen factory), **Transaction rollback** (TestSuite struct, SetupTest/TeardownTest), **In-memory cache driver** (Redis gerektirme), **Mail fake** (mailleri bellekte tut, gönderildiğini assert et), **Queue fake** (dispatch edilen job'ları assert et) |
 | Veri | **Generic Repository** deseni, otomatik soft-delete, **zincirleme Scope'lar**, Offset tabanlı sayfalama |
-| VT / Ops | GORM + **`db migrate` / `rollback` / `seed`** + **`db backup` / `restore`** |
+| VT / Ops | **PostgreSQL · MySQL · SQLite · SQL Server** (`database_driver` + GORM); **`db migrate` / `rollback`** (varsayılan **embed** SQL **`pkg/migrations/sql/<sürücü>/`**), **`seed`**, **`db backup` / `restore`** (Postgres istemci araçları) |
 | **Depolama** | **Yerel / S3 / MinIO / Cloudflare R2** sürücüleri, **imzalı URL'ler**, **resim işleme** (yeniden boyutlandırma, kırpma, küçük resim), **Fiber middleware**, genel + özel diskler |
 | **HTTP Client** | Zincirleme API ile JSON odaklı HTTP istemcisi; **WithToken**, **WithHeader**, **WithTimeout**, `Get`/`Post`/`Put`, otomatik JSON marshal/unmarshal, 5xx hatalarında retry ve testler için fake transport |
 | Kuyruk | **Redis tabanlı** job kuyruğu, geciktirilmiş joblar (ZADD), otomatik retry + üssel geri çekilme, başarısız joblar (veritabanı tablosu `zatrano_failed_jobs`, migration ile) |
