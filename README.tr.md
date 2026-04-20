@@ -62,7 +62,7 @@ Uygulamanızın **`import` ettiği kamu API’si** **`pkg/`** altındadır. Bu r
 
 > **Durum:** Aktif geliştirme. Uygulamanızın platforma dayandığı **kamu API yüzeyi** **`pkg/`** olarak ele alınmalıdır.
 
-### Bakımcı
+### Geliştirici ve Proje Sahibi:
 
 **Serhan KARAKOÇ** — [github.com/serhankarakoc](https://github.com/serhankarakoc)
 
