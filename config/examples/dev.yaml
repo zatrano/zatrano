@@ -131,6 +131,15 @@ static_url_prefix: /static
 #     - key: beta-ui
 #       enabled: true
 
+# HTML admin (dashboard, /metrics, /logs). Requires view: + admin.enabled.
+# Prod: set admin.secret (header X-Admin-Key or ?admin_key=).
+# admin:
+#   enabled: true
+#   path_prefix: /admin
+#   secret: ""
+#   log_file: storage/logs/app.log
+#   queue_names: [default, mails, events]
+
 # ─── View / Template Engine ──────────────────────────────────────────────────
 # view:
 #   root: views            # template root directory

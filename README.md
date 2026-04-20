@@ -399,7 +399,7 @@ audit:
 
 Run **`zatrano db migrate`** so migration **`000009_audit`** creates **`zatrano_activity_logs`** and **`zatrano_http_audit_logs`**.
 
-### Model activity (97)
+### Model activity
 
 1. Register each auditable type once at startup:
 
@@ -425,11 +425,11 @@ db.WithContext(ctx).Create(&product)
 
 **Soft deletes** implemented as `UPDATE deleted_at` are logged as **updates**, not deletes.
 
-### HTTP audit (98)
+### HTTP audit
 
 **`middleware.AuditLog`** runs after **`AccessLog`** when `audit.enabled` and `audit.http_enabled` are true. It writes either to **`zatrano_http_audit_logs`** (`http_driver: db`) or **append-only JSON lines** (`http_driver: file`). User id resolution order: **`LocalsUserID`** (RBAC middleware) then **JWT claims** `sub`.
 
-### Diff helper (99)
+### Diff helper
 
 **`audit.DiffJSONPatch`** returns `json.RawMessage` patch bytes suitable for storing in the **`changes`** column on **`zatrano_activity_logs`**.
 

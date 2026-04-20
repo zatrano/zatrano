@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/requestid"
 	"github.com/gofiber/fiber/v3/middleware/static"
 
+	"github.com/zatrano/zatrano/pkg/admin"
 	"github.com/zatrano/zatrano/pkg/broadcast"
 	"github.com/zatrano/zatrano/pkg/core"
 	zgraphql "github.com/zatrano/zatrano/pkg/graphql"
@@ -136,6 +137,7 @@ func Mount(a *core.App, app *fiber.App, opts MountOptions) {
 	zgraphql.Register(a, app)
 	broadcast.Register(a.Broadcast, a.Config, app)
 	registerModules(a, app)
+	admin.Register(a, app)
 	if opts.RegisterRoutes != nil {
 		opts.RegisterRoutes(a, app)
 	}

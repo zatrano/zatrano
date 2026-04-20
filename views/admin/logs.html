@@ -1,0 +1,30 @@
+{{extends "layouts/app"}}
+{{define "title"}}{{.Title}} — {{.AppName}}{{end}}
+
+{{define "nav"}}
+<a class="navbar-link" href="{{.AdminPrefix}}">Özet</a>
+<a class="navbar-link" href="{{.AdminPrefix}}/metrics">Metrikler</a>
+<a class="navbar-link" href="{{.AdminPrefix}}/logs">Günlükler</a>
+{{end}}
+
+{{define "content"}}
+<section class="admin-logs">
+  <h1>Günlük görüntüleyici</h1>
+  {{if .LogError}}
+  <p class="alert alert-warning">{{.LogError}}</p>
+  {{else}}
+  <p>Dosya: <code>{{.LogPath}}</code> · Son <strong>{{.LogLineCap}}</strong> satıra kadar.</p>
+  <p><a class="button" href="{{.AdminPrefix}}/logs/download">İndir</a></p>
+
+  <form method="get" action="{{.AdminPrefix}}/logs" class="admin-log-filter">
+    <label for="q">Ara (satır içi)</label>
+    <input id="q" name="q" type="search" value="{{.LogQuery}}" placeholder="ör. ERROR">
+    <button type="submit">Filtrele</button>
+    {{if .LogQuery}}<a href="{{.AdminPrefix}}/logs">Temizle</a>{{end}}
+  </form>
+
+  <pre class="log-pane">{{range .LogLines}}{{.}}
+{{else}}(Satır yok){{end}}</pre>
+  {{end}}
+</section>
+{{end}}

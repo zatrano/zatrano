@@ -50,30 +50,34 @@ func bytesHasMarkers(b []byte) bool {
 		strings.Contains(s, wireRegEnd)
 }
 
-// WireTargetsFromModuleDir decides Register vs RegisterCRUD from files under modules/<pkg>/.
-func WireTargetsFromModuleDir(moduleRoot, out, rawName string) (addRegister, addCRUD bool, moduleDir string, err error) {
+// WireTargetsFromModuleDir decides Register vs RegisterCRUD vs RegisterAdmin from files under modules/<pkg>/.
+func WireTargetsFromModuleDir(moduleRoot, out, rawName string) (addRegister, addCRUD, addAdmin bool, moduleDir string, err error) {
 	pkg := PackageName(rawName)
 	if pkg == "" {
-		return false, false, "", fmt.Errorf("invalid module name %q", rawName)
+		return false, false, false, "", fmt.Errorf("invalid module name %q", rawName)
 	}
 	moduleDir = filepath.Join(moduleRoot, out, pkg)
 	reg := filepath.Join(moduleDir, "register.go")
 	crud := filepath.Join(moduleDir, "crud_register.go")
+	adm := filepath.Join(moduleDir, "admin_register.go")
 	if _, e := os.Stat(reg); e == nil {
 		addRegister = true
 	}
 	if _, e := os.Stat(crud); e == nil {
 		addCRUD = true
 	}
-	if !addRegister && !addCRUD {
-		return false, false, moduleDir, fmt.Errorf("expected register.go and/or crud_register.go under %s (run gen module / gen crud first)", filepath.ToSlash(moduleDir))
+	if _, e := os.Stat(adm); e == nil {
+		addAdmin = true
 	}
-	return addRegister, addCRUD, moduleDir, nil
+	if !addRegister && !addCRUD && !addAdmin {
+		return false, false, false, moduleDir, fmt.Errorf("expected register.go, crud_register.go and/or admin_register.go under %s (run gen module / gen crud / gen admin first)", filepath.ToSlash(moduleDir))
+	}
+	return addRegister, addCRUD, addAdmin, moduleDir, nil
 }
 
 // WirePatch updates import and register markers for one module package (snake_case name).
-func WirePatch(wireFile, moduleImport, relPkg string, pkgName string, addRegister, addCRUD bool) error {
-	if !addRegister && !addCRUD {
+func WirePatch(wireFile, moduleImport, relPkg string, pkgName string, addRegister, addCRUD, addAdmin bool) error {
+	if !addRegister && !addCRUD && !addAdmin {
 		return nil
 	}
 	relPkg = strings.Trim(relPkg, "/")
@@ -88,7 +92,7 @@ func WirePatch(wireFile, moduleImport, relPkg string, pkgName string, addRegiste
 	if err != nil {
 		return err
 	}
-	s, err = patchWireRegisters(s, pkgName, addRegister, addCRUD)
+	s, err = patchWireRegisters(s, pkgName, addRegister, addCRUD, addAdmin)
 	if err != nil {
 		return err
 	}
@@ -114,7 +118,7 @@ func patchWireImports(s, importPath string) (string, error) {
 	return s[:i+len(wireImportsStart)] + newInner + s[absEnd:], nil
 }
 
-func patchWireRegisters(s string, pkgName string, addRegister, addCRUD bool) (string, error) {
+func patchWireRegisters(s string, pkgName string, addRegister, addCRUD, addAdmin bool) (string, error) {
 	i := strings.Index(s, wireRegStart)
 	if i < 0 {
 		return "", fmt.Errorf("missing %q", strings.TrimSpace(wireRegStart))
@@ -132,6 +136,9 @@ func patchWireRegisters(s string, pkgName string, addRegister, addCRUD bool) (st
 	}
 	if addCRUD && !strings.Contains(inner, pkgName+".RegisterCRUD(") {
 		out = out + fmt.Sprintf("\t%s.RegisterCRUD(a, app)\n", pkgName)
+	}
+	if addAdmin && !strings.Contains(inner, pkgName+".RegisterAdmin(") {
+		out = out + fmt.Sprintf("\t%s.RegisterAdmin(a, app)\n", pkgName)
 	}
 	if out == inner {
 		return s, nil

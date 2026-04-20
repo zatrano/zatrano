@@ -14,7 +14,7 @@ func TestWirePatch_roundTrip(t *testing.T) {
 	if err := os.WriteFile(p, []byte(initial), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := WirePatch(p, "example.com/app", "modules/foo_bar", "foo_bar", true, true); err != nil {
+	if err := WirePatch(p, "example.com/app", "modules/foo_bar", "foo_bar", true, true, false); err != nil {
 		t.Fatal(err)
 	}
 	b, err := os.ReadFile(p)
@@ -28,7 +28,7 @@ func TestWirePatch_roundTrip(t *testing.T) {
 	if !strings.Contains(s, "foo_bar.Register(a, app)") || !strings.Contains(s, "foo_bar.RegisterCRUD(a, app)") {
 		t.Fatalf("missing calls: %s", s)
 	}
-	if err := WirePatch(p, "example.com/app", "modules/foo_bar", "foo_bar", true, true); err != nil {
+	if err := WirePatch(p, "example.com/app", "modules/foo_bar", "foo_bar", true, true, false); err != nil {
 		t.Fatal(err)
 	}
 	b2, err := os.ReadFile(p)
@@ -53,24 +53,44 @@ func TestWireTargetsFromModuleDir(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(base, "register.go"), []byte("package foo_bar\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	reg, crud, dir, err := WireTargetsFromModuleDir(tmp, "modules", "foo-bar")
+	reg, crud, adm, dir, err := WireTargetsFromModuleDir(tmp, "modules", "foo-bar")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reg || crud {
-		t.Fatalf("want Register only, got reg=%v crud=%v", reg, crud)
+	if !reg || crud || adm {
+		t.Fatalf("want Register only, got reg=%v crud=%v adm=%v", reg, crud, adm)
 	}
 	if err := os.WriteFile(filepath.Join(base, "crud_register.go"), []byte("package foo_bar\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	reg, crud, _, err = WireTargetsFromModuleDir(tmp, "modules", "foo_bar")
+	reg, crud, adm, _, err = WireTargetsFromModuleDir(tmp, "modules", "foo_bar")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reg || !crud {
-		t.Fatalf("want both, got reg=%v crud=%v", reg, crud)
+	if !reg || !crud || adm {
+		t.Fatalf("want Register+CRUD, got reg=%v crud=%v adm=%v", reg, crud, adm)
 	}
 	_ = dir
+}
+
+func TestWirePatch_RegisterAdmin(t *testing.T) {
+	const initial = "package routes\n\nimport (\n\t\"github.com/gofiber/fiber/v3\"\n\n\t\"github.com/zatrano/zatrano/pkg/core\"\n\t// zatrano:wire:imports:start\n\t// zatrano:wire:imports:end\n)\n\nfunc Register(a *core.App, app *fiber.App) {\n\t// zatrano:wire:register:start\n\t// zatrano:wire:register:end\n}\n"
+	tmp := t.TempDir()
+	p := filepath.Join(tmp, "register.go")
+	if err := os.WriteFile(p, []byte(initial), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := WirePatch(p, "example.com/app", "modules/foo_bar", "foo_bar", false, false, true); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(b)
+	if !strings.Contains(s, "foo_bar.RegisterAdmin(a, app)") {
+		t.Fatalf("missing RegisterAdmin: %s", s)
+	}
 }
 
 func TestResolveWireFile_prefersInternalRoutes(t *testing.T) {

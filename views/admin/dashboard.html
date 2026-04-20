@@ -1,0 +1,19 @@
+{{extends "layouts/app"}}
+{{define "title"}}{{.Title}} — {{.AppName}}{{end}}
+
+{{define "nav"}}
+<a class="navbar-link" href="{{.AdminPrefix}}">Özet</a>
+<a class="navbar-link" href="{{.AdminPrefix}}/metrics">Metrikler</a>
+<a class="navbar-link" href="{{.AdminPrefix}}/logs">Günlükler</a>
+{{end}}
+
+{{define "content"}}
+<section class="admin-dashboard">
+  <h1>Yönetim paneli</h1>
+  <p class="text-muted">Kuyruk derinliği, başarısız işler ve günlük dosyası için aşağıdaki bağlantıları kullanın.</p>
+  <ul class="admin-links">
+    <li><a href="{{.AdminPrefix}}/metrics">Metrikler</a> — Redis kuyruğu, <code>zatrano_failed_jobs</code>, Redis keyspace isabet oranı</li>
+    <li><a href="{{.AdminPrefix}}/logs">Günlükler</a> — Zap / dosya kuyruğu, arama ve indirme</li>
+  </ul>
+</section>
+{{end}}

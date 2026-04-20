@@ -57,6 +57,7 @@ type Config struct {
 	Search    Search    `mapstructure:"search"`
 	Features  Features  `mapstructure:"features"`
 	GraphQL   GraphQL   `mapstructure:"graphql"`
+	Admin     Admin     `mapstructure:"admin"`
 }
 
 type API struct {
@@ -186,6 +187,10 @@ func Load(opts LoadOptions) (*Config, error) {
 	v.SetDefault("graphql.path", "/graphql")
 	v.SetDefault("graphql.playground", false)
 	v.SetDefault("graphql.playground_path", "/playground")
+	v.SetDefault("admin.enabled", false)
+	v.SetDefault("admin.path_prefix", "/admin")
+	v.SetDefault("admin.secret", "")
+	v.SetDefault("admin.log_file", "")
 
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
@@ -256,6 +261,9 @@ func (c *Config) validate() error {
 	if err := c.validateGraphQL(); err != nil {
 		return err
 	}
+	if err := c.validateAdmin(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -312,6 +320,7 @@ func (c *Config) applyDerivedDefaults() {
 	c.applySearchDefaults()
 	c.applyFeaturesDefaults()
 	c.applyGraphQLDefaults()
+	c.applyAdminDefaults()
 }
 
 func appendUniquePrefix(s []string, v string) []string {

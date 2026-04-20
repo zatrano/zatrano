@@ -1,0 +1,47 @@
+{{extends "layouts/app"}}
+{{define "title"}}{{.Title}} — {{.AppName}}{{end}}
+
+{{define "nav"}}
+<a class="navbar-link" href="{{.AdminPrefix}}">Özet</a>
+<a class="navbar-link" href="{{.AdminPrefix}}/metrics">Metrikler</a>
+<a class="navbar-link" href="{{.AdminPrefix}}/logs">Günlükler</a>
+{{end}}
+
+{{define "content"}}
+<section class="admin-metrics">
+  <h1>Metrikler</h1>
+
+  <h2>Kuyruk (Redis)</h2>
+  {{if .Metrics.Queues}}
+  <table class="data-table">
+    <thead><tr><th>Kuyruk</th><th>Hazır (LLEN)</th><th>Ertelenmiş (ZCARD)</th></tr></thead>
+    <tbody>
+      {{range .Metrics.Queues}}
+      <tr>
+        <td><code>{{.Name}}</code></td>
+        <td>{{.Ready}}</td>
+        <td>{{.Delayed}}</td>
+      </tr>
+      {{end}}
+    </tbody>
+  </table>
+  {{else}}
+  <p class="text-muted">Redis bağlı değil veya kuyruk listesi boş.</p>
+  {{end}}
+
+  <h2>Başarısız işler</h2>
+  {{if .Metrics.FailedJobsOK}}
+  <p><strong>{{.Metrics.FailedJobs}}</strong> kayıt (<code>zatrano_failed_jobs</code>)</p>
+  {{else}}
+  <p class="text-muted">Veritabanından okunamadı (tablo yok veya DB kapalı).</p>
+  {{end}}
+
+  <h2>Önbellek isabeti (Redis keyspace)</h2>
+  {{if .Metrics.RedisInfoOK}}
+  <p>Hits: <strong>{{.Metrics.RedisHits}}</strong> · Misses: <strong>{{.Metrics.RedisMisses}}</strong></p>
+  <p>İsabet oranı: <strong>{{.Metrics.CacheHitRate}}</strong></p>
+  {{else}}
+  <p class="text-muted">Redis <code>INFO stats</code> okunamadı.</p>
+  {{end}}
+</section>
+{{end}}

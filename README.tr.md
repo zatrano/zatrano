@@ -390,7 +390,7 @@ audit:
 
 **`zatrano db migrate`** ile **`000009_audit`** migration'ı **`zatrano_activity_logs`** ve **`zatrano_http_audit_logs`** tablolarını oluşturur.
 
-### Model activity (97)
+### Model activity
 
 1. Başlangıçta türleri kaydedin: `audit.RegisterSubject[Product]("products")`.
 2. GORM'a verdiğiniz `context` içine `audit.WithUser` / `audit.WithRequest` ekleyin. `middleware.AuditLog` açıksa istek bağlamına **request id**, **IP** ve varsa **JWT `sub`** eklenir.
@@ -399,11 +399,11 @@ audit:
 
 **Soft delete** (`deleted_at` güncellemesi) çoğu durumda **update** olarak loglanır.
 
-### HTTP audit (98)
+### HTTP audit
 
 **`middleware.AuditLog`**, `audit.enabled` + `audit.http_enabled` iken **`AccessLog`** sonrasında çalışır; **DB** veya **JSONL dosya** yazar. Kullanıcı: önce **`LocalsUserID`**, yoksa JWT **`sub`**.
 
-### Diff (99)
+### Diff
 
 Bkz. **`audit.DiffJSONPatch`** (`pkg/audit/patch.go`).
 
@@ -467,7 +467,7 @@ features:
 - **`allowed_roles`** doluysa **anonim** isteklerde bayrak **kapalı**dır; roller **`middleware.InjectRoles`** (veya aynı Locals anahtarlarını dolduran akış) ile gelmelidir.
 - **`rollout_percent`** 1–99 arasıyken **kullanıcı id’si** yoksa sonuç **kapalı**dır (kovaya girmek için `uint` id gerekir).
 
-### Go API (104)
+### Go API
 
 ```go
 u := &features.User{ID: 1, Roles: []string{"admin"}}
@@ -477,7 +477,7 @@ if app.Features.For(u).IsEnabled(c.Context(), "new-dashboard") {
 // İstekten: app.Features.FromFiber(c).IsEnabled(ctx, "beta-ui")
 ```
 
-### HTTP middleware (105)
+### HTTP middleware
 
 ```go
 import "github.com/zatrano/zatrano/pkg/middleware"
@@ -487,7 +487,7 @@ app.Get("/beta", middleware.RequireFeature(app.Features, "beta-ui"), handler)
 
 Bayrak kapalıysa **404** döner (rota “yok” gibi). **`server.Mount`**, `features.enabled` iken **`Features.LocalsMiddleware`** ekler; **`features.EvalFromFiber(c)`** ile aynı değerlendiriciye erişebilirsiniz.
 
-### View şablonu (105)
+### View şablonu
 
 **`a.View.ViewData(c, ...)`** kullanın; içine otomatik **`feature`** şablon fonksiyonu için gerekli bağlama eklenir:
 
@@ -511,7 +511,7 @@ go run github.com/99designs/gqlgen@v0.17.78 generate
 
 (İlk **`go run github.com/99designs/gqlgen@…`** indirme ve çözümlemesi biraz sürebilir; sonraki çağrılar önbellekten hızlıdır.)
 
-### Yapılandırma (106)
+### Yapılandırma
 
 ```yaml
 graphql:
@@ -523,7 +523,7 @@ graphql:
 
 **`server.Mount`**, `graphql.enabled` iken **`graphql.Register`** çağrısıyla Fiber üzerinde **`middleware/adaptor`** ile `net/http` gqlgen işleyicisini bağlar; kök JSON’da **`graphql`** ve isteğe **`graphql_playground`** uçları listelenir.
 
-### DataLoader (107)
+### DataLoader
 
 Her HTTP isteği için **`graphql.NewLoaders(app)`** oluşturulur ve **`graphql.WithLoaders`** ile `context.Context` üzerinden resolver’lara taşınır. Resolver içinde:
 
@@ -534,7 +534,7 @@ ld := zgraphql.LoadersFrom(ctx)
 _ = ld // alanlarınız: *dataloader.Loader[...] (graph-gophers/dataloader/v7)
 ```
 
-### Kod üretimi (108)
+### Kod üretimi
 
 ```bash
 zatrano gen graphql product --module-root .

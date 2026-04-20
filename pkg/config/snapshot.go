@@ -115,6 +115,12 @@ func SanitizedSnapshot(c *Config) map[string]any {
 			"playground":       c.GraphQL.Playground,
 			"playground_path":  c.GraphQL.PlaygroundPath,
 		},
+		"admin": map[string]any{
+			"enabled":     c.Admin.Enabled,
+			"path_prefix": c.Admin.PathPrefix,
+			"secret":      MaskSecret(c.Admin.Secret),
+			"log_file":    strings.TrimSpace(c.Admin.LogFile),
+		},
 	}
 	return out
 }

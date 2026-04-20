@@ -114,6 +114,12 @@ func (r *RedisDriver) MigrateDelayed(ctx context.Context, queue string) error {
 	return nil
 }
 
+// RedisReadyListKey returns the Redis list key for the ready FIFO queue named queue.
+func RedisReadyListKey(queue string) string { return queueKey(queue) }
+
+// RedisDelayedZSetKey returns the Redis sorted-set key for delayed jobs on queue.
+func RedisDelayedZSetKey(queue string) string { return delayedKey(queue) }
+
 // Size returns the number of pending payloads.
 func (r *RedisDriver) Size(ctx context.Context, queue string) (int64, error) {
 	return r.client.LLen(ctx, queueKey(queue)).Result()

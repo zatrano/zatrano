@@ -44,12 +44,24 @@ var genWireCmd = &cobra.Command{
 	Short: "Patch wire markers only (no code generation)",
 	Long: `Updates internal/routes/register.go or pkg/server/register_modules.go from modules/<name>/.
 
-By default, adds Register() if register.go exists and RegisterCRUD() if crud_register.go exists.
+By default, adds Register() if register.go exists, RegisterCRUD() if crud_register.go exists,
+and RegisterAdmin() if admin_register.go exists.
 Use this after --skip-wire, or to re-apply wiring without overwriting module files.
 
 Runs "go fmt" on the wire file when the Go toolchain is available.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runGenWire,
+}
+
+var genAdminCmd = &cobra.Command{
+	Use:   "admin [name]",
+	Short: "Add HTML admin list scaffold (admin_handlers.go, admin_register.go, views/admin/<name>/)",
+	Long: `Requires an existing modules/<name>/ directory (zatrano gen module <name>).
+Expects models.%ModelName% in package models (same name as module, PascalCase).
+
+Patches the wire file with RegisterAdmin() unless --skip-wire.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runGenAdmin,
 }
 
 var genViewCmd = &cobra.Command{
@@ -83,6 +95,7 @@ func init() {
 	genWireCmd.Flags().String("module-root", ".", "directory containing go.mod")
 	genWireCmd.Flags().Bool("register-only", false, "only add Register (ignore crud_register.go)")
 	genWireCmd.Flags().Bool("crud-only", false, "only add RegisterCRUD (ignore register.go)")
+	genWireCmd.Flags().Bool("admin-only", false, "only add RegisterAdmin (ignore register.go and crud_register.go)")
 	genViewCmd.Flags().String("views-root", "views", "root directory for view templates")
 	genViewCmd.Flags().String("layout", "layouts/app", "layout template the generated views extend")
 	genViewCmd.Flags().Bool("with-form", false, "also generate create.html and edit.html with form scaffolding")
@@ -90,7 +103,12 @@ func init() {
 	genGraphqlCmd.Flags().String("module-root", ".", "directory containing go.mod and gqlgen.yml")
 	genGraphqlCmd.Flags().Bool("dry-run", false, "print path only, do not write files")
 	genGraphqlCmd.Flags().Bool("skip-generate", false, "write .graphqls only; do not run gqlgen")
-	genCmd.AddCommand(genModuleCmd, genCrudCmd, genWireCmd, genViewCmd, genGraphqlCmd)
+	genAdminCmd.Flags().String("out", "modules", "base directory (relative to module-root)")
+	genAdminCmd.Flags().String("module-root", ".", "directory containing go.mod")
+	genAdminCmd.Flags().Bool("dry-run", false, "print paths only, do not write files")
+	genAdminCmd.Flags().Bool("skip-wire", false, "do not patch wire markers after generate")
+
+	genCmd.AddCommand(genModuleCmd, genCrudCmd, genAdminCmd, genWireCmd, genViewCmd, genGraphqlCmd)
 	rootCmd.AddCommand(genCmd)
 }
 
@@ -115,7 +133,7 @@ func runGenModule(cmd *cobra.Command, args []string) error {
 		}
 		return nil
 	}
-	if wf, err := patchWire(moduleRoot, out, args[0], true, false); err != nil {
+	if wf, err := patchWire(moduleRoot, out, args[0], true, false, false); err != nil {
 		fmt.Fprintf(os.Stderr, "wire: %v\n", err)
 	} else {
 		fmt.Println("\nWired:", filepath.ToSlash(wf))
@@ -145,7 +163,7 @@ func runGenCrud(cmd *cobra.Command, args []string) error {
 		}
 		return nil
 	}
-	if wf, err := patchWire(moduleRoot, out, args[0], false, true); err != nil {
+	if wf, err := patchWire(moduleRoot, out, args[0], false, true, false); err != nil {
 		fmt.Fprintf(os.Stderr, "wire: %v\n", err)
 	} else {
 		fmt.Println("\nWired:", filepath.ToSlash(wf))
@@ -159,28 +177,72 @@ func runGenWire(cmd *cobra.Command, args []string) error {
 	moduleRoot, _ := cmd.Flags().GetString("module-root")
 	regOnly, _ := cmd.Flags().GetBool("register-only")
 	crudOnly, _ := cmd.Flags().GetBool("crud-only")
-	if regOnly && crudOnly {
-		return fmt.Errorf("use only one of --register-only or --crud-only")
+	adminOnly, _ := cmd.Flags().GetBool("admin-only")
+	n := 0
+	if regOnly {
+		n++
 	}
-	addReg, addCrud, modDir, err := gen.WireTargetsFromModuleDir(moduleRoot, out, args[0])
+	if crudOnly {
+		n++
+	}
+	if adminOnly {
+		n++
+	}
+	if n > 1 {
+		return fmt.Errorf("use at most one of --register-only, --crud-only, --admin-only")
+	}
+	addReg, addCrud, addAdmin, modDir, err := gen.WireTargetsFromModuleDir(moduleRoot, out, args[0])
 	if err != nil {
 		return err
 	}
 	if regOnly {
-		addCrud = false
+		addCrud, addAdmin = false, false
 	}
 	if crudOnly {
-		addReg = false
+		addReg, addAdmin = false, false
 	}
-	if !addReg && !addCrud {
+	if adminOnly {
+		addReg, addCrud = false, false
+	}
+	if !addReg && !addCrud && !addAdmin {
 		return fmt.Errorf("nothing to wire under %s", filepath.ToSlash(modDir))
 	}
-	wf, err := patchWire(moduleRoot, out, args[0], addReg, addCrud)
+	wf, err := patchWire(moduleRoot, out, args[0], addReg, addCrud, addAdmin)
 	if err != nil {
 		return err
 	}
 	fmt.Println("Wired:", filepath.ToSlash(wf))
 	fmtWireFmt(moduleRoot, wf)
+	return nil
+}
+
+func runGenAdmin(cmd *cobra.Command, args []string) error {
+	out, _ := cmd.Flags().GetString("out")
+	moduleRoot, _ := cmd.Flags().GetString("module-root")
+	dry, _ := cmd.Flags().GetBool("dry-run")
+	skipWire, _ := cmd.Flags().GetBool("skip-wire")
+	paths, err := gen.Admin(moduleRoot, out, args[0], dry)
+	if err != nil {
+		return err
+	}
+	if dry {
+		fmt.Println("dry-run — would write:")
+	} else {
+		fmt.Println("written:")
+	}
+	fmt.Println(strings.Join(paths, "\n"))
+	if dry || skipWire {
+		if !dry && skipWire {
+			fmt.Println("\nWire skipped (--skip-wire).")
+		}
+		return nil
+	}
+	if wf, err := patchWire(moduleRoot, out, args[0], false, false, true); err != nil {
+		fmt.Fprintf(os.Stderr, "wire: %v\n", err)
+	} else {
+		fmt.Println("\nWired:", filepath.ToSlash(wf))
+		fmtWireFmt(moduleRoot, wf)
+	}
 	return nil
 }
 
@@ -196,7 +258,7 @@ func fmtWireFmt(moduleRoot, wf string) {
 	fmt.Println("Formatted:", filepath.ToSlash(rel))
 }
 
-func patchWire(moduleRoot, out, rawName string, addRegister, addCRUD bool) (string, error) {
+func patchWire(moduleRoot, out, rawName string, addRegister, addCRUD, addAdmin bool) (string, error) {
 	wf, err := gen.ResolveWireFile(moduleRoot)
 	if err != nil {
 		return "", err
@@ -207,7 +269,7 @@ func patchWire(moduleRoot, out, rawName string, addRegister, addCRUD bool) (stri
 	}
 	pkg := gen.PackageName(rawName)
 	rel := filepath.ToSlash(filepath.Join(out, pkg))
-	if err := gen.WirePatch(wf, modImport, rel, pkg, addRegister, addCRUD); err != nil {
+	if err := gen.WirePatch(wf, modImport, rel, pkg, addRegister, addCRUD, addAdmin); err != nil {
 		return "", err
 	}
 	return wf, nil
