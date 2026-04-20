@@ -72,6 +72,7 @@ Uygulamanızın **`import` ettiği kamu API’si** **`pkg/`** altındadır. Bu r
 
 - [Genel bakış](#genel-bakış)
 - [Özellikler](#özellikler-yol-haritası)
+- [Özellik rehberi](#özellik-rehberi)
 - [Dizilim](#dizilim-pkg-ve-internal)
 - [Gereksinimler](#gereksinimler)
 - [Veritabanı](#veritabanı)
@@ -91,6 +92,12 @@ Uygulamanızın **`import` ettiği kamu API’si** **`pkg/`** altındadır. Bu r
 - [Full-text search](#full-text-search)
 - [Feature flags](#feature-flags)
 - [GraphQL](#graphql)
+- [Zamanlanmış görevler](#zamanlanmış-görevler)
+- [Yönetici paneli](#yönetici-paneli)
+- [REST API yardımcıları](#rest-api-yardımcıları)
+- [Giden HTTP istemcisi](#giden-http-istemcisi)
+- [Bildirimler](#bildirimler)
+- [HTTP test yardımcıları](#http-test-yardımcıları)
 - [Repository / Veri Sistemi](#repository--veri-sistemi)
 - [Storage / Dosya Yönetimi](#storage--dosya-yönetimi)
 - [View / Template Sistemi](#view--template-sistemi)
@@ -130,9 +137,219 @@ Uygulamanızın **`import` ettiği kamu API’si** **`pkg/`** altındadır. Bu r
 | **Feature flags** | **`pkg/features`** — YAML ve/veya **`zatrano_feature_flags`** tablosu, kullanıcı + rol + **yüzde rollout** (A/B), **`app.Features.For(user).IsEnabled`**, **`middleware.RequireFeature`**, şablon **`{{if feature . "anahtar"}}`** (`ViewData` ile) |
 | **GraphQL** | **gqlgen** şema öncelikli (`api/graphql/*.graphqls`, `gqlgen.yml`), **`/graphql`** Fiber **`adaptor`**, isteğe **GraphiQL** playground, **`graph-gophers/dataloader`** ile istek başına **`Loaders`**, **`zatrano gen graphql <model>`** |
 | Operasyon | `/health`, `/ready`, `/status` |
-| CLI | **`new`**, **`gen module`**, **`gen crud`**, **`gen request`**, **`gen policy`**, **`gen job`**, **`gen mail`**, **`gen event`**, **`gen listener`**, **`gen notification`**, **`gen model`**, **`gen middleware`**, **`gen resource`**, **`gen test`**, **`gen seeder`**, **`gen factory`**, **`gen command`**, **`gen graphql`**, `serve`, `db`, **`search import`**, **`cache`**, **`queue`**, **`mail`**, **`openapi export`**, `openapi validate`, **`jwt sign`**, **`api-key create`**, **`api-key list`**, **`api-key revoke`**, … |
+| CLI | **`new`**, **`gen module`**, **`gen crud`**, **`gen admin`**, **`gen request`**, **`gen policy`**, **`gen job`**, **`gen mail`**, **`gen event`**, **`gen listener`**, **`gen notification`**, **`gen model`**, **`gen middleware`**, **`gen resource`**, **`gen test`**, **`gen seeder`**, **`gen factory`**, **`gen command`**, **`gen wire`**, **`gen view`**, **`gen graphql`**, `serve`, `db`, **`db tenants`**, **`schedule run`**, **`schedule list`**, **`search import`**, **`cache`**, **`queue`**, **`mail`**, **`openapi export`**, `openapi validate`, **`jwt sign`**, **`api-key create`**, **`api-key list`**, **`api-key revoke`**, … |
 
-**Şu an hazır:** `serve`, `doctor`, **`routes`**, **`config print`**, **`config validate`**, **`verify`** (isteğe **`--race`**), `completion`, `version` / **`--version`**, **`new`**, **`gen module`** + **`gen crud`** + **`gen request`** + **`gen policy`** + **`gen job`** + **`gen mail`** + **`gen event`** + **`gen listener`** + **`gen notification`** + **`gen model`** + **`gen middleware`** + **`gen resource`** + **`gen test`** + **`gen seeder`** + **`gen factory`** + **`gen command`** + **`gen wire`** + **`gen view`** + **`gen graphql`**, **`db`** (golang-migrate; varsayılan **embed** SQL **`pkg/migrations/sql/<sürücü>/`**, isteğe **file** + `migrations_dir` / `--migrations`) + **`db tenants`** (kiracı PostgreSQL şemasında migrate/rollback/create-schema), **`search import`** (Meilisearch/Typesense toplu indeks, `RegisterImporter`), **`pkg/features`** (bayraklar, rollout, şablon + HTTP middleware), **`pkg/graphql`** (gqlgen + dataloader kancaları), **`cache`** (Memory/Redis, Tags, middleware), **`queue`** (Redis FIFO, geciktirilmiş joblar, retry, başarısız joblar, worker), **`mail`** (SMTP/log, şablonlar, kuyruk, ek dosya, önizleme), **`events`** (senkron/asenkron gönderim, ShouldQueue, kuyruk tabanlı listener'lar), **`notifications`** (çok kanallı, Veritabanı/SMS/Push, okundu-takibi, Twilio/Netgsm/FCM/APNs), **`broadcast`** (WebSocket hub, Pusher tarzı protokol, private/presence JWT kanalları, SSE), **`audit`** (model activity + HTTP audit, JSON Patch farkları), **`pkg/search`** (PostgreSQL FTS scope'ları + harici sürücü), **`openapi validate`** + **`openapi export`**, **`jwt sign`**, **`storage`** (yerel/S3/MinIO/R2, imzalı URL'ler, resim işleme), **OAuth2**, **`http.*`** (CORS, rate limit, istek süresi, gövde boyutu), **`i18n`** (JSON yereller + Fiber yardımcıları), **validation** (generic `Validate[T]`, i18n hata mesajları, özel kurallar, form request'ler), **yetkilendirme** (RBAC rol→izin, Gate/Policy, `middleware.Can`, i18n 403), **çok kiracılık** (`middleware.ResolveTenant`, `pkg/tenant`, tenant kapsamlı repository), **view motoru** (`{{extends}}` layout kalıtımı, `{{block}}` bölümleri, `views/components/` partial'ları, form builder, flash mesajlar, eski girdi `{{old}}`, `{{asset}}` versiyonlanmış URL'ler, Vite/esbuild manifest + HMR), Redis + CSRF, JWT, Scalar **`/docs`**, **Air** (`.air.toml`).
+**Şu an hazır:** `serve`, `doctor`, **`routes`**, **`config print`**, **`config validate`**, **`verify`** (isteğe **`--race`**), `completion`, `version` / **`--version`**, **`new`**, **`gen module`** + **`gen crud`** + **`gen admin`** + **`gen request`** + **`gen policy`** + **`gen job`** + **`gen mail`** + **`gen event`** + **`gen listener`** + **`gen notification`** + **`gen model`** + **`gen middleware`** + **`gen resource`** + **`gen test`** + **`gen seeder`** + **`gen factory`** + **`gen command`** + **`gen wire`** + **`gen view`** + **`gen graphql`**, **`db`** (golang-migrate; varsayılan **embed** SQL **`pkg/migrations/sql/<sürücü>/`**, isteğe **file** + `migrations_dir` / `--migrations`) + **`db tenants`** (kiracı PostgreSQL şemasında migrate/rollback/create-schema), **`pkg/schedule`** + **`schedule run`** / **`schedule list`** (cron, Redis çakışma kilidi), **`search import`** (Meilisearch/Typesense toplu indeks, `RegisterImporter`), **`pkg/features`** (bayraklar, rollout, şablon + HTTP middleware), **`pkg/graphql`** (gqlgen + dataloader kancaları), **`cache`** (Memory/Redis, Tags, middleware), **`queue`** (Redis FIFO, geciktirilmiş joblar, retry, başarısız joblar, worker), **`mail`** (SMTP/log, şablonlar, kuyruk, ek dosya, önizleme), **`events`** (senkron/asenkron gönderim, ShouldQueue, kuyruk tabanlı listener'lar), **`notifications`** (çok kanallı, Veritabanı/SMS/Push, okundu-takibi, Twilio/Netgsm/FCM/APNs), **`broadcast`** (WebSocket hub, Pusher tarzı protokol, private/presence JWT kanalları, SSE), **`audit`** (model activity + HTTP audit, JSON Patch farkları), **`pkg/search`** (PostgreSQL FTS scope'ları + harici sürücü), **`openapi validate`** + **`openapi export`**, **`jwt sign`**, **`pkg/storage`** (yerel/S3/MinIO/R2, imzalı URL'ler, resim işleme), **`pkg/api`** (standart JSON gövdesi, imleç sayfalama, API anahtarları, sürüm önekleri), **`pkg/http`** (giden JSON istemcisi + test fake), **`pkg/testing`** (Fiber HTTP test istemcisi, veritabanı işlem geri almalı test suite), **`pkg/admin`** (`admin.enabled` iken gösterge/metrik/log HTML arayüzü), **OAuth2**, **`http.*`** (CORS, rate limit, istek süresi, gövde boyutu), **`i18n`** (JSON yereller + Fiber yardımcıları), **validation** (generic `Validate[T]`, i18n hata mesajları, özel kurallar, form request'ler), **yetkilendirme** (RBAC rol→izin, Gate/Policy, `middleware.Can`, i18n 403), **çok kiracılık** (`middleware.ResolveTenant`, `pkg/tenant`, tenant kapsamlı repository), **view motoru** (`{{extends}}` layout kalıtımı, `{{block}}` bölümleri, `views/components/` partial'ları, form builder, flash mesajlar, eski girdi `{{old}}`, `{{asset}}` versiyonlanmış URL'ler, Vite/esbuild manifest + HMR), Redis + CSRF, JWT, Scalar **`/docs`**, **Air** (`.air.toml`).
+
+## Özellik rehberi
+
+Her madde **ne işe yarar** der, kısa bir **YAML / CLI / Go** örneği verir, ardından **ayrıntılı bölüme** bağlanır.
+
+### Veritabanı ve migrasyonlar
+
+**Amaç:** GORM bağlantısı + **golang-migrate** ile sürümlü SQL (gömülü ağaç veya disk üzeri).
+
+```yaml
+database_driver: postgres
+database_url: postgres://user:pass@localhost:5432/app?sslmode=disable
+migrations_source: embed # veya file + migrations_dir
+```
+
+```bash
+zatrano db migrate
+zatrano db rollback --steps 1
+```
+
+**Ayrıntı:** [Veritabanı](#veritabanı) · [Veritabanı migrasyonları (SQL)](#veritabanı-migrasyonları-sql)
+
+### HTTP, OpenAPI ve dokümantasyon
+
+**Amaç:** Fiber yığını, birleşik **`/openapi.yaml`**, Scalar **`/docs`**, sağlık uçları, JWT/OAuth ve yayın yolları (yapılandırmaya bağlı).
+
+```bash
+curl -s http://127.0.0.1:8080/api/v1/public/ping
+zatrano openapi validate --merged
+```
+
+**Ayrıntı:** [HTTP ve i18n](#http-ve-i18n)
+
+### Uluslararasılaştırma (i18n)
+
+**Amaç:** **`locales_dir`** altında JSON çeviri dosyaları; işleyicide **`i18n.T`** / **`i18n.Tf`**; doğrulama ve yetki mesajları aynı paketle uyumlu olabilir.
+
+```go
+msg := i18n.T(c, "app.welcome")
+```
+
+**Ayrıntı:** [HTTP ve i18n](#http-ve-i18n)
+
+### Doğrulama (validation)
+
+**Amaç:** `go-playground/validator` etiketleri + **`validation.Validate[T]`**; **`zatrano gen request`** ile form isteği iskeleti.
+
+**Ayrıntı:** [Validation (Doğrulama)](#validation-doğrulama)
+
+### Yetkilendirme (RBAC ve Gate/Policy)
+
+**Amaç:** Veritabanı destekli rol/izin, kaynak politikaları, **`middleware.Can`** ve rol yardımcıları; **`zatrano gen policy`**.
+
+**Ayrıntı:** [Yetkilendirme (RBAC & Gate/Policy)](#yetkilendirme-rbac--gatepolicy)
+
+### Önbellek (cache)
+
+**Amaç:** Bellek veya Redis üzerinden **`app.Cache`** (`Set`/`Get`, JSON yardımcıları, `Remember`, etiketler, HTTP yanıt önbelleği).
+
+```go
+_ = app.Cache.Set(ctx, "stats:last", "42", 5*time.Minute)
+```
+
+**Ayrıntı:** [Cache Sistemi (Önbellek)](#cache-sistemi-önbellek)
+
+### Kuyruk ve arka plan işleri
+
+**Amaç:** Redis tabanlı FIFO, gecikme, yeniden deneme; **`queue.Job`** + **`app.Queue.Dispatch`**; tüketici **`zatrano queue work`**.
+
+```go
+_ = app.Queue.Dispatch(ctx, &jobs.SendWelcomeEmailJob{UserID: 1})
+```
+
+**Ayrıntı:** [Kuyruk / Job Sistemi](#kuyruk--job-sistemi)
+
+### E-posta (mail)
+
+**Amaç:** SMTP/log posta, şablon, kuyruk, ek dosya; **`zatrano gen mail`**, **`zatrano mail preview`**.
+
+**Ayrıntı:** [Mail Sistemi (E-posta)](#mail-sistemi-e-posta)
+
+### Bildirimler (notifications)
+
+**Amaç:** Çok kanallı **`App.Notifications`** (`Register`, `Send`, `SendToChannels`); hazır kanal türleri (mail, veritabanı, SMS, push); **`zatrano gen notification`**.
+
+```go
+_ = app.Notifications.SendToChannels(ctx, notifications.NewNotification("Merhaba", "Metin", "kullanici@ornek.com"), "mail")
+```
+
+**Ayrıntı:** [Bildirimler](#bildirimler) · (Mail kanalı: [Mail Sistemi (E-posta)](#mail-sistemi-e-posta))
+
+### Olaylar (events)
+
+**Amaç:** **`app.Events.Listen` / `Fire`**; dinleyici **`ShouldQueue`** ile kuyrukta asenkron yürütülebilir.
+
+```go
+app.Events.Listen("user.created", events.ListenerFunc(func(ctx context.Context, e events.Event) error {
+    return nil
+}))
+```
+
+**Ayrıntı:** [Event / Listener Sistemi](#event--listener-sistemi)
+
+### Yayın (WebSocket / SSE)
+
+**Amaç:** Süreç içi hub, Pusher uyumlu WebSocket JSON, isteğe SSE; YAML **`broadcast`** ile açılır.
+
+```yaml
+broadcast:
+  enabled: true
+```
+
+**Ayrıntı:** [Broadcasting / WebSocket](#broadcasting--websocket)
+
+### Çok kiracılık (multi-tenancy)
+
+**Amaç:** Başlık veya alt alan adından kiracı çözümleme, **`tenant.FromContext`**, kiracı bilinçli repository ve isteğe **`zatrano db tenants`** ile PostgreSQL şema izolasyonu.
+
+**Ayrıntı:** [Multi-tenancy](#multi-tenancy)
+
+### Denetim (audit)
+
+**Amaç:** Model etkinlik günlüğü + HTTP denetim middleware'i; JSON Patch farkları; kullanıcı/istek **`context.Context`** üzerinde.
+
+**Ayrıntı:** [Audit / Activity log](#audit--activity-log)
+
+### Tam metin arama
+
+**Amaç:** PostgreSQL FTS için **`repository.Scope`** yardımcıları + Meilisearch/Typesense sürücüleri; toplu **`zatrano search import`**.
+
+**Ayrıntı:** [Full-text search](#full-text-search)
+
+### Özellik bayrakları (feature flags)
+
+**Amaç:** YAML/veritabanı bayrakları, yüzde rollout, **`middleware.RequireFeature`**, şablonda **`{{if feature . "anahtar"}}`**.
+
+**Ayrıntı:** [Feature flags](#feature-flags)
+
+### GraphQL
+
+**Amaç:** **`api/graphql/`** altında gqlgen şeması, Fiber **`/graphql`**, **`zatrano gen graphql`**, dataloader kancaları.
+
+**Ayrıntı:** [GraphQL](#graphql)
+
+### Zamanlanmış görevler (cron)
+
+**Amaç:** **`pkg/schedule`** ile adlandırılmış cron işleri (`schedule.Call(fn).Daily().At("09:00")`, **`WithoutOverlap()`** + Redis); **`zatrano schedule run`** veya **`schedule list`**.
+
+```go
+_, _ = schedule.Call(func(ctx context.Context) error { return nil }).Name("heartbeat").EveryMinute().Register()
+```
+
+**Ayrıntı:** [Zamanlanmış görevler](#zamanlanmış-görevler)
+
+### Yönetici arayüzü (admin)
+
+**Amaç:** Çerçeve **`pkg/admin`**, **`admin.enabled: true`** iken gösterge, metrik ve günlük görüntüleyici; **`zatrano gen admin`** modül listesi iskeleti üretir.
+
+**Ayrıntı:** [Yönetici paneli](#yönetici-paneli)
+
+### REST API yardımcıları (`pkg/api`)
+
+**Amaç:** Standart JSON **`api.Success` / `api.JSON`** gövdesi, imleç sayfalama, **`api.NewVersionManager`**, **`api_keys`** için **`api.NewKeyManager`**.
+
+**Ayrıntı:** [REST API yardımcıları](#rest-api-yardımcıları)
+
+### Giden HTTP istemcisi (`pkg/http`)
+
+**Amaç:** **`http.NewClient()`** — **`WithToken`**, **`WithRetry`**, JSON için **`Into`**; testlerde **`http.Fake`**.
+
+**Ayrıntı:** [Giden HTTP istemcisi](#giden-http-istemcisi)
+
+### Repository ve veri erişimi
+
+**Amaç:** Jenerik **`repository.New[T]`**, zincirlenebilir scope'lar, GORM üzerinde sayfalama yardımcıları.
+
+**Ayrıntı:** [Repository / Veri Sistemi](#repository--veri-sistemi)
+
+### Depolama (dosya ve diskler)
+
+**Amaç:** **`pkg/storage`** diskleri (yerel/S3/MinIO/R2), imzalı URL'ler, görüntü yardımcıları; genel dizin için CLI sembolik bağ.
+
+```bash
+zatrano storage:link
+```
+
+**Ayrıntı:** [Storage / Dosya Yönetimi](#storage--dosya-yönetimi)
+
+### Görünüm / şablonlar
+
+**Amaç:** **`{{extends}}`** ile düzen, bloklar, partial'lar, form yardımcıları, Vite manifest; **`zatrano gen view`**.
+
+**Ayrıntı:** [View / Template Sistemi](#view--template-sistemi)
+
+### HTTP test yardımcıları (`pkg/testing`)
+
+**Amaç:** **`testing.NewHTTPClient(app)`** ile Fiber **`app.Test`**; **`testing.NewTestSuite(db)`** ile test başına geri alınan GORM işlemi.
+
+**Ayrıntı:** [HTTP test yardımcıları](#http-test-yardımcıları)
+
+### Araçlar (CLI, yapılandırma, kalite)
+
+**Amaç:** **`zatrano doctor`**, **`config validate`**, **`verify`**, OpenAPI dışa aktarma, JWT imzalama, **`gen wire`** ve diğer **`zatrano gen …`** komutları.
+
+```bash
+zatrano doctor
+zatrano verify
+```
+
+**Ayrıntı:** [CLI komutları](#cli-komutları) · [Yapılandırma](#yapılandırma) · [Geliştirme](#geliştirme)
 
 ---
 
@@ -140,7 +357,7 @@ Uygulamanızın **`import` ettiği kamu API’si** **`pkg/`** altındadır. Bu r
 
 | Yol | Rol |
 |-----|-----|
-| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/mail`, `pkg/notifications`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/database`, `pkg/migrations` (gömülü SQL; doğrudan `import` hedefi değil), `pkg/zatrano`, `pkg/meta` | **Kamu API (`pkg/`)** — uygulama kodunuz burayı `import` eder |
+| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/schedule`, `pkg/mail`, `pkg/notifications`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/api`, `pkg/http`, `pkg/admin`, `pkg/database`, `pkg/migrations` (gömülü SQL; doğrudan `import` hedefi değil), `pkg/testing`, `pkg/zatrano`, `pkg/meta` | **Kamu API (`pkg/`)** — uygulama kodunuz burayı `import` eder |
 | `internal/cli`, `internal/db`, `internal/gen` | **CLI ve kod üreticileri** — çalışan uygulama tarafından `import` edilmez |
 
 İskelet uygulamalar **`zatrano.Start`** ile **`RegisterRoutes: routes.Register`** (`internal/routes/register.go`) kullanır; özel rota yoksa **`zatrano.Run()`** yeterlidir.
@@ -301,6 +518,10 @@ go run ./cmd/zatrano openapi export --output api/openapi.merged.yaml
 | GET | `/auth/oauth/google/callback`, `/auth/oauth/github/callback` | OAuth yönlendirme |
 | GET | `/broadcast/ws` | **WebSocket** (`broadcast.enabled: true` iken); Pusher tarzı JSON; JWT sorgu `access_token` veya `Authorization` |
 | GET | `/broadcast/sse/:kanal` | **SSE** (`broadcast.enabled` + `broadcast.sse_enabled`); WebSocket ile aynı kanal adları; token sorgu veya başlık |
+| GET | `{admin.path_prefix}/` | **Yönetim** HTML gösterge (**`admin.enabled`**, **`View`** gerekli; varsayılan önek **`/admin`**) |
+| GET | `{admin.path_prefix}/metrics` | Yönetim metrikleri (**`admin.queue_names`** ile Redis kuyruk derinlikleri vb.) |
+| GET | `{admin.path_prefix}/logs` | **`admin.log_file`** kuyruğu (ayarlıysa) |
+| GET | `{admin.path_prefix}/logs/download` | Yapılandırılmış günlük dosyasını indir |
 
 **Oturum + CSRF:** `redis_url` ve `security` uygunsa açılır. CSRF, `Bearer`, `csrf_skip_prefixes` (varsayılan `/api/`) ve **`/auth/oauth/`** için atlanır.
 
@@ -317,7 +538,11 @@ go run ./cmd/zatrano openapi export --output api/openapi.merged.yaml
 - **Zarif HTTP kapatma** — `http.shutdown_timeout` (varsayılan `15s`): Fiber `ShutdownWithContext` üst sınırı. Gömülü sunucu için `zatrano.StartOptions.ShutdownHooks` ile aynı süre içinde ek adımlar çalıştırılabilir.
 - **Sıfır kesinti yeniden başlatma (Unix)** — `http.graceful_restart: true`: [tableflip](https://github.com/cloudflare/tableflip) ile dinleyici soketinin yeni sürece devri; tetiklemek için sürece **`SIGUSR2`** gönderin (yeni ikili başlar, eski süreç bağlantıları boşaltır). İsteğe `http.graceful_restart_pid_file` (systemd `PIDFile=` senaryosu). **`go run` desteklenmez**; gerçek derlenmiş ikili kullanın. Windows yapılandırmada açık olsa bile çalışma zamanında devre dışı bırakılır.
 
-Yığın sırası: **recover → request-id → i18n (açıksa) → CORS → timeout → rate limit → helmet → compress → oturum/CSRF → rotalar**.
+Yığın sırası (**`pkg/server/mount.go`**): **recover → request-id → (kiracı, açıksa) → i18n (açıksa) → CORS → timeout → rate limit → helmet → compress → oturum/CSRF → erişim günlüğü → (HTTP audit, açıksa) → view flash (açıksa) → özellik bayrağı locals (açıksa) → rotalar** (ardından modüller, **`admin.Register`**, sizin **`RegisterRoutes`**, OAuth, OpenAPI, static).
+
+**Erişim günlüğü:** **`middleware.AccessLog`** her istek için yapılandırılmış Zap satırı yazar (metot, yol, durum, gecikme, IP, **`request_id`**).
+
+**Sağlık uçları:** **`health.Register`**, **`/health`**, **`/ready`**, **`/status`**; HTTP olmadan aynı kontroller için **`health.Probe(ctx, app)`**.
 
 ---
 
@@ -1652,10 +1877,104 @@ view:
 
 ---
 
+## Zamanlanmış görevler
+
+**`pkg/schedule`**, **`robfig/cron/v3`** ile adlandırılmış cron işlerini kaydeder. **`schedule.Call(fn)`** akışlı oluşturucu: **`EveryMinute`**, **`Hourly`**, **`Daily`**, **`Weekly`**, **`Monthly`**, gün tabanlı ön ayarlarda **`At("SS:DD")`**, **`WithSpec`**, **`Name`**, **`Description`**. Süreç açılışında (çoğunlukla `init()` veya modül kaydı) **`Register()`** çağrılır.
+
+**Çakışma önleme:** **`WithoutOverlap()`**, Redis kilidi ile aynı işin birden fazla replikada üst üste binmesini engeller (**`zatrano schedule run`** için **`redis_url`** gerekir).
+
+```bash
+zatrano schedule list
+zatrano schedule run --env dev --config-dir config
+```
+
+**`schedule run`**, yapılandırmayı yükler, gerekiyorsa Redis açar, iç cron planlayıcıyı başlatır ve **SIGINT** / **SIGTERM** gelene kadar bloklar.
+
+---
+
+## Yönetici paneli
+
+İki tamamlayıcı parça:
+
+1. **Çerçeve yönetimi (`pkg/admin`)** — **`admin.enabled: true`** iken **`server.Mount`**, **`admin.Register`** çağırır ve **`admin.path_prefix`** altında (varsayılan **`/admin`**) HTML sayfaları sunar: gösterge, **metrikler** (yapılandırılmış kuyruk derinlikleri), **günlükler** (**`admin.log_file`** kuyruğu), **günlük indirme**. **`admin.secret`** doluysa her istekte **`X-Admin-Key`** veya **`?admin_key=`** gerekir. **`env: prod`** iken admin açıksa **`admin.secret` zorunludur**.
+
+```yaml
+admin:
+  enabled: true
+  path_prefix: /admin
+  secret: "degistir"       # prod'da zorunlu
+  log_file: storage/logs/app.log
+  queue_names: [default, mails, events]
+```
+
+2. **Modül admin iskelesi (`zatrano gen admin <modül>`)** — Mevcut **`zatrano gen module`** ağacı için **`admin_handlers.go`**, **`admin_register.go`**, **`views/admin/<modül>/index.html`** üretir. Rotaları **`RegisterAdmin`** ile bağlayın.
+
+---
+
+## REST API yardımcıları
+
+**`pkg/api`** ham Fiber yanıtlarının ötesinde JSON API’yi standartlaştırır.
+
+- **`api.Success` / `api.Created` / `api.JSON`** — `{ "data", "meta?", "links?" }` zarfı.
+- **`api.CursorPage`**, **`api.CursorPaginateOpts`**, **`EncodeCursor` / `DecodeCursor`** — imleç tabanlı sayfalama.
+- **`api.NewVersionManager(cfg)`** — **`Group`**, **`Middleware`** (**`X-API-Version`**), yapılandırmadaki **`api.*`** alanlarıyla.
+- **`api.NewKeyManager(db)`**, **`api.GenerateKey`**, **`api.ValidateKey`** — **`api_keys`** tablosu ve **`zatrano api-key …`** CLI ile uyumlu yardımcılar.
+
+---
+
+## Giden HTTP istemcisi
+
+**`pkg/http`**, dış JSON servisleri için **`http.NewClient()`** sunar: **`WithToken`**, **`WithHeader`**, **`WithTimeout`**, **`WithRetry`**, **`Get` / `Post` / `Put`** ve yanıt için **`Into`**. Testlerde **`http.Fake`**.
+
+```go
+c := http.NewClient().WithToken(os.Getenv("REMOTE_TOKEN")).WithTimeout(10 * time.Second)
+var out RemoteDTO
+_ = c.Get("https://api.example.com/v1/me").Into(&out)
+```
+
+---
+
+## Bildirimler
+
+**`pkg/notifications`**, **`Notification`**, **`Channel`**, **`Manager`** (`Register`, `Send`, `SendToChannels`) tanımlar. **`core.Bootstrap`** varsayılan **`mail`** kanalını **`App.Mail`** ile bağlar; veritabanı, SMS veya push için ek **`Register`** çağrıları yapın (**`pkg/notifications`** altındaki sürücülere bakın). Basit gövdeler için **`notifications.NewNotification`** / **`BaseNotification`**.
+
+```go
+n := notifications.NewNotification("Hoş geldiniz", "Kayıt için teşekkürler.", user.Email)
+_ = app.Notifications.SendToChannels(ctx, n, "mail")
+```
+
+**`zatrano gen notification <Ad>`** tip bildirim iskeleti üretir. **`pkg/auth`** içindeki şifre sıfırlama / e-posta doğrulama zaten **`SendToChannels(..., "mail")`** kullanır.
+
+---
+
+## HTTP test yardımcıları
+
+**`pkg/testing`** kutu testi ve veritabanı izolasyonu sağlar.
+
+- **`testing.NewHTTPClient(fiberApp)`** — JSON gövdeli **`Get` / `Post` / `Put` / `Patch` / `Delete`**, isteğe Bearer, **`AssertStatus`**, **`AssertJSON`**.
+- **`testing.NewTestSuite(db)`** — **`SetupTest` / `TeardownTest`** ile her testte geri alınan GORM işlemi (**`GetDB()`**).
+
+---
+
+## Storage / Dosya Yönetimi
+
+**`pkg/storage`**, adlandırılmış **diskler** (varsayılan **`local`**, isteğe **`private`**, veya **`s3` / `minio` / `r2`** — **`storage.Register`** / yapılandırma haritası). **İmzalı geçici URL'ler**, **görüntü yardımcıları**, özel dosyalar için **`storage.ServeFileMiddleware`**.
+
+Tipik kullanım: **`config.Config`** içindeki **`storage.*`** (bkz. `config/examples/dev.yaml`), **`storage.Manager`** oluşturma, **`manager.Disk("local")`** ile **`Driver`** alıp **`Put`**, **`Get`**, **`TemporaryURL`** kullanma.
+
+```bash
+zatrano storage:link
+zatrano storage:clear local --force
+```
+
+**`storage:link`**, **`storage/app/public`** içeriğini tarayıcıdan **`public/storage`** altında göstermek için sembolik bağ oluşturur.
+
+---
+
 ## Yapılandırma
 
 - **`.env`**, **`config/{env}.yaml`**, **ortam değişkenleri** (ör. `SECURITY_JWT_SECRET`). Çoklu köken veya **`supported_locales`** gibi **listeler** için **YAML** tercih edin.
-- Ayrıntı: `migrations_source`, `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, `security.*`, `oauth.*` — `config/examples/dev.yaml`.
+- Önemli alanlar: `migrations_source`, `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, **`admin.*`**, **`storage.*`**, `security.*`, `oauth.*`, **`api.*`**, **`broadcast.*`**, **`graphql.*`**, … — `config/examples/dev.yaml`.
 
 ### Veritabanı migrasyonları (SQL)
 

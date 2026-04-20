@@ -72,6 +72,7 @@ Application code imports the **public contract** from **`pkg/`**. This repositor
 
 - [Overview](#overview)
 - [Features](#features-roadmap)
+- [Feature catalog](#feature-catalog)
 - [Layout](#layout-pkg-vs-internal)
 - [Requirements](#requirements)
 - [Database](#database)
@@ -91,6 +92,12 @@ Application code imports the **public contract** from **`pkg/`**. This repositor
 - [Full-text search](#full-text-search)
 - [Feature flags](#feature-flags)
 - [GraphQL](#graphql)
+- [Scheduled tasks](#scheduled-tasks)
+- [Admin dashboard](#admin-dashboard)
+- [REST API helpers](#rest-api-helpers)
+- [Outbound HTTP client](#outbound-http-client)
+- [Notifications](#notifications)
+- [HTTP testing helpers](#http-testing-helpers)
 - [Repository / Data](#repository--data)
 - [Storage / File Management](#storage--file-management)
 - [View / Template System](#view--template-system)
@@ -131,9 +138,219 @@ Application code imports the **public contract** from **`pkg/`**. This repositor
 | **Storage** | **Local / S3 / MinIO / Cloudflare R2** drivers, **signed URLs**, **image processing** (resize, crop, thumbnail), **Fiber middleware**, public + private disks |
 | **HTTP Client** | Fluent JSON client with **WithToken**, **WithHeader**, **WithTimeout**, `Get`/`Post`/`Put`, automatic JSON marshal/unmarshal, retry on 5xx, and fake test transport |
 | Ops | `/health`, `/ready`, `/status` |
-| CLI | **`new`**, **`gen module`**, **`gen crud`**, **`gen request`**, **`gen policy`**, **`gen job`**, **`gen mail`**, **`gen event`**, **`gen listener`**, **`gen notification`**, **`gen model`**, **`gen middleware`**, **`gen resource`**, **`gen test`**, **`gen seeder`**, **`gen factory`**, **`gen command`**, **`gen graphql`**, `serve`, `db`, **`search import`**, **`cache`**, **`queue`**, **`mail`**, **`openapi export`**, `openapi validate`, **`jwt sign`**, **`api-key create`**, **`api-key list`**, **`api-key revoke`**, … |
+| CLI | **`new`**, **`gen module`**, **`gen crud`**, **`gen admin`**, **`gen request`**, **`gen policy`**, **`gen job`**, **`gen mail`**, **`gen event`**, **`gen listener`**, **`gen notification`**, **`gen model`**, **`gen middleware`**, **`gen resource`**, **`gen test`**, **`gen seeder`**, **`gen factory`**, **`gen command`**, **`gen wire`**, **`gen view`**, **`gen graphql`**, `serve`, `db`, **`db tenants`**, **`schedule run`**, **`schedule list`**, **`search import`**, **`cache`**, **`queue`**, **`mail`**, **`openapi export`**, `openapi validate`, **`jwt sign`**, **`api-key create`**, **`api-key list`**, **`api-key revoke`**, … |
 
-**Implemented now:** `serve`, `doctor`, **`routes`**, **`config print`**, **`config validate`**, **`verify`** (optional **`--race`**), `completion`, `version` / **`--version`**, **`new`**, **`gen module`** + **`gen crud`** + **`gen request`** + **`gen policy`** + **`gen job`** + **`gen mail`** + **`gen event`** + **`gen listener`** + **`gen notification`** + **`gen model`** + **`gen middleware`** + **`gen resource`** + **`gen test`** + **`gen seeder`** + **`gen factory`** + **`gen command`** + **`gen wire`** + **`gen view`** + **`gen graphql`**, **`db`** (golang-migrate; default **embed** SQL from **`pkg/migrations/sql/<driver>/`**, optional **file** + `migrations_dir` / `--migrations`) + **`db tenants`** (per-tenant PostgreSQL schema migrate/rollback/create-schema), **`search import`** (Meilisearch/Typesense bulk index via `RegisterImporter`), **`pkg/features`** (flags, rollout, template + HTTP middleware), **`pkg/graphql`** (gqlgen + dataloader hooks), **`cache`** (Memory/Redis, Tags, middleware), **`queue`** (Redis FIFO, delayed jobs, retry, failed jobs, worker), **`mail`** (SMTP/log, templates, queue, attachments, preview), **`events`** (sync/async dispatch, ShouldQueue, queue-backed listeners), **`notifications`** (multi-channel, Database/SMS/Push, read-tracking, Twilio/Netgsm/FCM/APNs), **`broadcast`** (WebSocket hub, Pusher-style protocol, private/presence JWT channels, SSE), **`audit`** (model activity + HTTP audit, JSON Patch diffs), **`pkg/search`** (PostgreSQL FTS scopes + external drivers), **`openapi validate`** + **`openapi export`**, **`jwt sign`**, **`storage`** (local/S3/MinIO/R2, signed URLs, image processing), **OAuth2**, **`http.*`** (CORS, rate limit, request timeout, body limit), **`i18n`** (JSON locales + Fiber helpers), **validation** (generic `Validate[T]`, i18n errors, custom rules, form requests), **authorization** (RBAC role→permission, Gate/Policy, `middleware.Can`, i18n 403), **multi-tenancy** (`middleware.ResolveTenant`, `pkg/tenant`, tenant-scoped repository), **view engine** (`{{extends}}` layout inheritance, `{{block}}` sections, `views/components/` partials, form builder, flash messages, old-input `{{old}}`, `{{asset}}` versioned URLs, Vite/esbuild manifest + HMR), Redis session + CSRF, JWT, Scalar **`/docs`**, **Air** (`.air.toml`).
+**Implemented now:** `serve`, `doctor`, **`routes`**, **`config print`**, **`config validate`**, **`verify`** (optional **`--race`**), `completion`, `version` / **`--version`**, **`new`**, **`gen module`** + **`gen crud`** + **`gen admin`** + **`gen request`** + **`gen policy`** + **`gen job`** + **`gen mail`** + **`gen event`** + **`gen listener`** + **`gen notification`** + **`gen model`** + **`gen middleware`** + **`gen resource`** + **`gen test`** + **`gen seeder`** + **`gen factory`** + **`gen command`** + **`gen wire`** + **`gen view`** + **`gen graphql`**, **`db`** (golang-migrate; default **embed** SQL from **`pkg/migrations/sql/<driver>/`**, optional **file** + `migrations_dir` / `--migrations`) + **`db tenants`** (per-tenant PostgreSQL schema migrate/rollback/create-schema), **`pkg/schedule`** + **`schedule run`** / **`schedule list`** (cron, Redis overlap lock), **`search import`** (Meilisearch/Typesense bulk index via `RegisterImporter`), **`pkg/features`** (flags, rollout, template + HTTP middleware), **`pkg/graphql`** (gqlgen + dataloader hooks), **`cache`** (Memory/Redis, Tags, middleware), **`queue`** (Redis FIFO, delayed jobs, retry, failed jobs, worker), **`mail`** (SMTP/log, templates, queue, attachments, preview), **`events`** (sync/async dispatch, ShouldQueue, queue-backed listeners), **`notifications`** (multi-channel, Database/SMS/Push, read-tracking, Twilio/Netgsm/FCM/APNs), **`broadcast`** (WebSocket hub, Pusher-style protocol, private/presence JWT channels, SSE), **`audit`** (model activity + HTTP audit, JSON Patch diffs), **`pkg/search`** (PostgreSQL FTS scopes + external drivers), **`openapi validate`** + **`openapi export`**, **`jwt sign`**, **`pkg/storage`** (local/S3/MinIO/R2, signed URLs, image processing), **`pkg/api`** (response envelope, cursor pagination, API keys, route versioning), **`pkg/http`** (fluent outbound JSON client + test fake), **`pkg/testing`** (Fiber HTTP test client, DB transaction test suite), **`pkg/admin`** (ops dashboard: metrics, logs tail/download when `admin.enabled`), **OAuth2**, **`http.*`** (CORS, rate limit, request timeout, body limit), **`i18n`** (JSON locales + Fiber helpers), **validation** (generic `Validate[T]`, i18n errors, custom rules, form requests), **authorization** (RBAC role→permission, Gate/Policy, `middleware.Can`, i18n 403), **multi-tenancy** (`middleware.ResolveTenant`, `pkg/tenant`, tenant-scoped repository), **view engine** (`{{extends}}` layout inheritance, `{{block}}` sections, `views/components/` partials, form builder, flash messages, old-input `{{old}}`, `{{asset}}` versioned URLs, Vite/esbuild manifest + HMR), Redis session + CSRF, JWT, Scalar **`/docs`**, **Air** (`.air.toml`).
+
+## Feature catalog
+
+Each item states **what it is for**, shows a **tiny config / CLI / Go** example, then points to the **full chapter** below.
+
+### Database & migrations
+
+**Purpose:** GORM connection + versioned SQL via **golang-migrate** (embed or on-disk tree).
+
+```yaml
+database_driver: postgres
+database_url: postgres://user:pass@localhost:5432/app?sslmode=disable
+migrations_source: embed # or file + migrations_dir
+```
+
+```bash
+zatrano db migrate
+zatrano db rollback --steps 1
+```
+
+**Details:** [Database](#database) · [Database migrations (SQL)](#database-migrations-sql)
+
+### HTTP, OpenAPI & docs
+
+**Purpose:** Fiber stack, merged **`/openapi.yaml`**, Scalar **`/docs`**, health routes, JWT/OAuth stubs, broadcast paths when enabled.
+
+```bash
+curl -s http://127.0.0.1:8080/api/v1/public/ping
+zatrano openapi validate --merged
+```
+
+**Details:** [HTTP (current)](#http-current)
+
+### Internationalization (i18n)
+
+**Purpose:** JSON locale files under **`locales_dir`**; `i18n.T` / `i18n.Tf` in handlers; validation/auth messages can reuse the same bundle.
+
+```go
+msg := i18n.T(c, "app.welcome")
+```
+
+**Details:** [HTTP (current)](#http-current)
+
+### Validation
+
+**Purpose:** `go-playground/validator` tags + `validation.Validate[T]`; **`zatrano gen request`** scaffolds form requests.
+
+**Details:** [Validation](#validation)
+
+### Authorization (RBAC & Gate/Policy)
+
+**Purpose:** DB-backed roles/permissions, resource policies, **`middleware.Can`** / role helpers; **`zatrano gen policy`**.
+
+**Details:** [Authorization (RBAC & Gate/Policy)](#authorization-rbac--gatepolicy)
+
+### Cache
+
+**Purpose:** Memory or Redis-backed **`app.Cache`** (`Set`/`Get`, JSON helpers, `Remember`, tags, HTTP response caching).
+
+```go
+_ = app.Cache.Set(ctx, "stats:last", "42", 5*time.Minute)
+```
+
+**Details:** [Cache System](#cache-system)
+
+### Queue & jobs
+
+**Purpose:** Redis-backed FIFO, delayed jobs, retries; **`queue.Job`** + **`app.Queue.Dispatch`**; worker via **`zatrano queue work`**.
+
+```go
+_ = app.Queue.Dispatch(ctx, &jobs.SendWelcomeEmailJob{UserID: 1})
+```
+
+**Details:** [Queue / Job System](#queue--job-system)
+
+### Mail
+
+**Purpose:** SMTP/log mail with templates, queue integration, attachments; **`zatrano gen mail`**, **`zatrano mail preview`**.
+
+**Details:** [Mail System](#mail-system)
+
+### Notifications
+
+**Purpose:** Multi-channel **`App.Notifications`** (`Register`, `Send`, `SendToChannels`); built-in mail/database/SMS/push channel types; **`zatrano gen notification`**.
+
+```go
+_ = app.Notifications.SendToChannels(ctx, notifications.NewNotification("Hi", "Body", "user@example.com"), "mail")
+```
+
+**Details:** [Notifications](#notifications) · (Mail channel wiring: [Mail System](#mail-system))
+
+### Events
+
+**Purpose:** **`app.Events.Listen` / `Fire`**; listeners may implement **`ShouldQueue`** for async replay via the queue.
+
+```go
+app.Events.Listen("user.created", events.ListenerFunc(func(ctx context.Context, e events.Event) error {
+    return nil
+}))
+```
+
+**Details:** [Event / Listener System](#event--listener-system)
+
+### Broadcasting (WebSocket / SSE)
+
+**Purpose:** In-process hub, Pusher-compatible WebSocket JSON, optional SSE; enable with **`broadcast`** in YAML.
+
+```yaml
+broadcast:
+  enabled: true
+```
+
+**Details:** [Broadcasting / WebSocket](#broadcasting--websocket)
+
+### Multi-tenancy
+
+**Purpose:** Resolve tenant from header/subdomain, **`tenant.FromContext`**, tenant-aware repositories and optional per-tenant PostgreSQL schemas (**`zatrano db tenants`**).
+
+**Details:** [Multi-tenancy](#multi-tenancy)
+
+### Audit
+
+**Purpose:** Model activity log + HTTP audit middleware; JSON Patch diffs; user/request on **`context.Context`**.
+
+**Details:** [Audit / Activity log](#audit--activity-log)
+
+### Full-text search
+
+**Purpose:** PostgreSQL FTS **`repository.Scope`** helpers + Meilisearch/Typesense drivers; bulk **`zatrano search import`**.
+
+**Details:** [Full-text search](#full-text-search)
+
+### Feature flags
+
+**Purpose:** YAML/DB flags, percentage rollout, **`middleware.RequireFeature`**, template **`{{if feature . "key"}}`**.
+
+**Details:** [Feature flags](#feature-flags)
+
+### GraphQL
+
+**Purpose:** gqlgen schema under **`api/graphql/`**, Fiber adaptor at **`/graphql`**, **`zatrano gen graphql`**, dataloader hooks.
+
+**Details:** [GraphQL](#graphql)
+
+### Scheduled tasks (cron)
+
+**Purpose:** Register cron jobs with **`pkg/schedule`** (`schedule.Call(fn).Daily().At("09:00")`, `WithoutOverlap()` + Redis); run **`zatrano schedule run`** or list with **`schedule list`**.
+
+```go
+_, _ = schedule.Call(func(ctx context.Context) error { return nil }).Name("heartbeat").EveryMinute().Register()
+```
+
+**Details:** [Scheduled tasks](#scheduled-tasks)
+
+### Admin (ops UI + CRUD scaffold)
+
+**Purpose:** Framework **`pkg/admin`** mounts dashboard, metrics, and log viewer under **`admin.path_prefix`** when **`admin.enabled`**; **`zatrano gen admin`** scaffolds module HTML list pages that reuse **`pkg/admin`** helpers.
+
+**Details:** [Admin dashboard](#admin-dashboard)
+
+### REST API helpers (`pkg/api`)
+
+**Purpose:** Standard JSON **`api.Success` / `api.JSON`** envelope, cursor pagination helpers, **`api.NewVersionManager`**, hashed **`api_keys`** via **`api.NewKeyManager`**.
+
+**Details:** [REST API helpers](#rest-api-helpers)
+
+### Outbound HTTP client (`pkg/http`)
+
+**Purpose:** Fluent **`http.NewClient()`** with **`WithToken`**, **`WithRetry`**, JSON **`Get`/`Post`/`Put`** helpers and **`http.Fake`** for tests.
+
+**Details:** [Outbound HTTP client](#outbound-http-client)
+
+### Repository & data access
+
+**Purpose:** Generic **`repository.New[T]`**, chainable scopes, pagination helpers over GORM.
+
+**Details:** [Repository / Data](#repository--data)
+
+### Storage (files & disks)
+
+**Purpose:** **`pkg/storage`** disks (local/S3/MinIO/R2), signed URLs, image helpers; symlink public assets with CLI.
+
+```bash
+zatrano storage:link
+```
+
+**Details:** [Storage / File Management](#storage--file-management)
+
+### View / templates
+
+**Purpose:** Layout **`{{extends}}`**, blocks, partials, form helpers, Vite manifest; **`zatrano gen view`**.
+
+**Details:** [View / Template System](#view--template-system)
+
+### HTTP integration testing (`pkg/testing`)
+
+**Purpose:** **`testing.NewHTTPClient(app)`** for Fiber **`app.Test`** flows; **`testing.NewTestSuite(db)`** for transaction rollback around tests.
+
+**Details:** [HTTP testing helpers](#http-testing-helpers)
+
+### Tooling (CLI, config, quality gates)
+
+**Purpose:** **`zatrano doctor`**, **`config validate`**, **`verify`**, OpenAPI export, JWT signing, **`gen wire`**, and the rest of **`zatrano gen …`**.
+
+```bash
+zatrano doctor
+zatrano verify
+```
+
+**Details:** [CLI commands](#cli-commands) · [Configuration](#configuration) · [Development](#development)
 
 ---
 
@@ -141,7 +358,7 @@ Application code imports the **public contract** from **`pkg/`**. This repositor
 
 | Path | Role |
 |------|------|
-| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/mail`, `pkg/notifications`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/database`, `pkg/migrations` (embedded SQL; not a Go import target), `pkg/zatrano`, `pkg/meta` | **Public API (`pkg/`)** — import from application code |
+| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/schedule`, `pkg/mail`, `pkg/notifications`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/api`, `pkg/http`, `pkg/admin`, `pkg/database`, `pkg/migrations` (embedded SQL; not a Go import target), `pkg/testing`, `pkg/zatrano`, `pkg/meta` | **Public API (`pkg/`)** — import from application code |
 | `internal/cli`, `internal/db`, `internal/gen` | **CLI & code generators** — not imported by running services |
 
 Scaffolded applications call **`zatrano.Start`** with **`RegisterRoutes: routes.Register`** (see `internal/routes/register.go`). Use **`zatrano.Run()`** when you do not inject custom routes.
@@ -303,6 +520,10 @@ go run ./cmd/zatrano openapi export --output api/openapi.merged.yaml
 | GET | `/auth/oauth/google/callback`, `/auth/oauth/github/callback` | OAuth redirect handler |
 | GET | `/broadcast/ws` | **WebSocket** (when `broadcast.enabled: true`); Pusher-style JSON; JWT via query `access_token` or `Authorization` |
 | GET | `/broadcast/sse/:channel` | **SSE** (when `broadcast.enabled` + `broadcast.sse_enabled`); same channel names as WebSocket; token via query or header |
+| GET | `{admin.path_prefix}/` | **Admin** HTML dashboard (**`admin.enabled`**, **`View`** required; default prefix **`/admin`**) |
+| GET | `{admin.path_prefix}/metrics` | Admin metrics (Redis queue depths from **`admin.queue_names`**, etc.) |
+| GET | `{admin.path_prefix}/logs` | Tail of **`admin.log_file`** (if set) |
+| GET | `{admin.path_prefix}/logs/download` | Download the configured log file |
 
 **Session + CSRF:** enabled when `redis_url` is set and `security.session_enabled` / `csrf_enabled` are true. CSRF is skipped for `Authorization: Bearer …`, `csrf_skip_prefixes` (default includes `/api/`), and **`/auth/oauth/`** (OAuth callbacks).
 
@@ -319,7 +540,11 @@ go run ./cmd/zatrano openapi export --output api/openapi.merged.yaml
 - **Graceful HTTP shutdown** — `http.shutdown_timeout` (default `15s`): upper bound for Fiber `ShutdownWithContext`. Use `zatrano.StartOptions.ShutdownHooks` for extra steps in the same deadline.
 - **Zero-downtime restart (Unix)** — `http.graceful_restart: true`: [tableflip](https://github.com/cloudflare/tableflip) listener handoff; send **`SIGUSR2`** to trigger `Upgrade()`. Optional `http.graceful_restart_pid_file` for systemd-style setups. Requires a **real compiled binary** (not `go run`). On Windows the flag is ignored at runtime.
 
-Order in the stack: **recover → request-id → i18n (if enabled) → CORS → request timeout → rate limit → helmet → compress → session/CSRF → routes**.
+Order in the stack (see **`pkg/server/mount.go`**): **recover → request-id → (tenant, if enabled) → i18n (if enabled) → CORS → request timeout → rate limit → helmet → compress → session/CSRF → access log → (HTTP audit, if enabled) → view flash (if enabled) → feature locals (if enabled) → routes** (then modules, **`admin.Register`**, your **`RegisterRoutes`**, OAuth, OpenAPI, static).
+
+**Access logging:** **`middleware.AccessLog`** writes one structured Zap line per request (method, path, status, latency, IP, **`request_id`**).
+
+**Health:** **`health.Register`** exposes **`/health`**, **`/ready`**, **`/status`**; use **`health.Probe(ctx, app)`** for the same checks without HTTP.
 
 ---
 
@@ -1706,10 +1931,104 @@ view:
 
 ---
 
+## Scheduled tasks
+
+**`pkg/schedule`** registers named cron jobs (standard 5-field spec via **`robfig/cron/v3`**). Use the fluent builder from **`schedule.Call(fn)`** (`EveryMinute`, `Hourly`, `Daily`, `Weekly`, `Monthly`, **`At("HH:MM")`** on day-based presets, **`WithSpec`**, **`Name`**, **`Description`**). Call **`Register()`** at process startup (typically `init()` in `modules/.../schedule.go`).
+
+**Overlap protection:** **`WithoutOverlap()`** serializes a task across replicas using a Redis lock (**`SkipOverlap`** + **`redis_url`** required for **`zatrano schedule run`**).
+
+```bash
+zatrano schedule list
+zatrano schedule run --env dev --config-dir config
+```
+
+The **`schedule run`** command loads config, opens Redis when any task uses overlap protection, starts the internal cron scheduler, and blocks until **SIGINT** / **SIGTERM**.
+
+---
+
+## Admin dashboard
+
+Two related surfaces:
+
+1. **Framework admin (`pkg/admin`)** — When **`admin.enabled: true`**, **`server.Mount`** calls **`admin.Register`**, which mounts **HTML** pages under **`admin.path_prefix`** (default **`/admin`**): dashboard, **metrics** (includes configured Redis queue depths), **logs** (tail of **`admin.log_file`**), and **log download**. If **`admin.secret`** is set, every request must send **`X-Admin-Key`** or **`?admin_key=`**. In **`env: prod`**, **`admin.secret`** is **required** when admin is enabled.
+
+```yaml
+admin:
+  enabled: true
+  path_prefix: /admin
+  secret: "change-me"       # required in prod
+  log_file: storage/logs/app.log
+  queue_names: [default, mails, events]
+```
+
+2. **Scaffolded module admin (`zatrano gen admin <module>`)** — Generates **`admin_handlers.go`**, **`admin_register.go`**, and **`views/admin/<module>/index.html`** for a list UI (requires an existing **`zatrano gen module`** tree and model). Use **`RegisterAdmin`** from your wire registration so routes mount under the same prefix helpers from **`pkg/admin`**.
+
+---
+
+## REST API helpers
+
+**`pkg/api`** standardizes JSON APIs beyond raw Fiber handlers.
+
+- **`api.Success` / `api.Created` / `api.JSON`** — `{ "data", "meta?", "links?" }` envelope.
+- **`api.CursorPage`**, **`api.CursorPaginateOpts`**, **`EncodeCursor` / `DecodeCursor`** — keyset pagination metadata.
+- **`api.NewVersionManager(cfg)`** — **`Group`**, **`Middleware`** (**`X-API-Version`**), driven by **`api.*`** in config.
+- **`api.NewKeyManager(db)`**, **`api.GenerateKey`**, **`api.ValidateKey`** — **`api_keys`** table helpers for CLI **`zatrano api-key …`** and application rotation flows.
+
+---
+
+## Outbound HTTP client
+
+**`pkg/http`** provides **`http.NewClient()`** for calling external JSON services: **`WithToken`**, **`WithHeader`**, **`WithTimeout`**, **`WithRetry`**, and method builders **`Get` / `Post` / `Put`** returning a fluent **`Request`** with JSON decode helpers. **`http.Fake(handler)`** swaps the transport for deterministic tests.
+
+```go
+c := http.NewClient().WithToken(os.Getenv("REMOTE_TOKEN")).WithTimeout(10 * time.Second)
+var out RemoteDTO
+_ = c.Get("https://api.example.com/v1/me").Into(&out)
+```
+
+---
+
+## Notifications
+
+**`pkg/notifications`** defines **`Notification`**, **`Channel`**, and **`Manager`** (`Register`, `Send`, `SendToChannels`). **`core.Bootstrap`** wires a default **`mail`** channel to **`App.Mail`**; add database, SMS, or push channels by **`Register`**-ing additional implementations (see **`pkg/notifications`** drivers). Use **`notifications.NewNotification`** / **`BaseNotification`** for simple payloads.
+
+```go
+n := notifications.NewNotification("Welcome", "Thanks for signing up.", user.Email)
+_ = app.Notifications.SendToChannels(ctx, n, "mail")
+```
+
+**`zatrano gen notification <Name>`** scaffolds a typed notification stub. Password reset / e-mail verification in **`pkg/auth`** already send through **`SendToChannels(..., "mail")`**.
+
+---
+
+## HTTP testing helpers
+
+**`pkg/testing`** supports black-box HTTP tests and database isolation.
+
+- **`testing.NewHTTPClient(fiberApp)`** — **`Get` / `Post` / `Put` / `Patch` / `Delete`** with JSON bodies, optional bearer token, **`HTTPResponse`** helpers (**`Status`**, **`JSON`**, assertions).
+- **`testing.NewTestSuite(db)`** — **`SetupTest` / `TeardownTest`** pair wraps each test in a rolled-back GORM transaction via **`GetDB()`**.
+
+---
+
+## Storage / File Management
+
+**`pkg/storage`** manages named **disks** (default **`local`**, optional **`private`**, or **S3-compatible** **`s3` / `minio` / `r2`** via **`storage.Register`** / config map). Features include **signed / temporary URLs**, **image helpers**, and **`storage.ServeFileMiddleware`** for guarded downloads.
+
+Typical wiring reads **`storage.*`** from **`config.Config`** (see `config/examples/dev.yaml`), builds a **`storage.Manager`**, obtains a **`Driver`** with **`manager.Disk("local")`** (or your disk name), then uses **`Put`**, **`Get`**, **`TemporaryURL`**, etc.; expose downloads with **`storage.ServeFileMiddleware`** when files are private.
+
+```bash
+zatrano storage:link
+zatrano storage:clear local --force
+```
+
+Use **`storage:link`** to symlink **`storage/app/public`** into **`public/storage`** for browser-visible uploads.
+
+---
+
 ## Configuration
 
 - **`.env`**, **`config/{env}.yaml`**, **environment variables** (nested keys use underscores, e.g. `SECURITY_JWT_SECRET`). For **lists** (e.g. multiple CORS origins or **`supported_locales`**), prefer **YAML**; env overrides for slices vary by shell.
-- Key fields: `migrations_source`, `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, `security.*`, `oauth.*` (see `config/examples/dev.yaml`).
+- Key fields: `migrations_source`, `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, **`admin.*`**, **`storage.*`**, `security.*`, `oauth.*`, **`api.*`**, **`broadcast.*`**, **`graphql.*`**, … (see `config/examples/dev.yaml`).
 
 ### Database migrations (SQL)
 
