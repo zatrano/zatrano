@@ -33,7 +33,8 @@ func PathsView(cfg *Config, wd, configDir string, dotenvPresent bool) map[string
 		"config_profile": profileState,
 		"http_addr":      cfg.HTTPAddr,
 		"openapi_path":   cfg.OpenAPIPath,
-		"migrations_dir": cfg.MigrationsDir,
+		"migrations_dir":     cfg.MigrationsDir,
+		"migrations_source":  cfg.MigrationsSource,
 		"seeds_dir":      cfg.SeedsDir,
 		"locales_dir":    localesDir,
 	}

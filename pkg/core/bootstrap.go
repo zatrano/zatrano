@@ -11,8 +11,6 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
 	"github.com/zatrano/zatrano/pkg/audit"
@@ -20,10 +18,12 @@ import (
 	"github.com/zatrano/zatrano/pkg/broadcast"
 	"github.com/zatrano/zatrano/pkg/cache"
 	"github.com/zatrano/zatrano/pkg/config"
+	zdb "github.com/zatrano/zatrano/pkg/database"
 	"github.com/zatrano/zatrano/pkg/events"
 	"github.com/zatrano/zatrano/pkg/features"
 	"github.com/zatrano/zatrano/pkg/i18n"
 	"github.com/zatrano/zatrano/pkg/mail"
+	"github.com/zatrano/zatrano/pkg/notifications"
 	"github.com/zatrano/zatrano/pkg/queue"
 	"github.com/zatrano/zatrano/pkg/search"
 	"github.com/zatrano/zatrano/pkg/validation"
@@ -58,9 +58,9 @@ func Bootstrap(cfg *config.Config) (*App, error) {
 				},
 			)
 		}
-		db, err := gorm.Open(postgres.Open(u), &gorm.Config{Logger: gormLog})
+		db, err := zdb.OpenGORM(cfg, gormLog)
 		if err != nil {
-			return nil, fmt.Errorf("postgres: %w", err)
+			return nil, fmt.Errorf("database: %w", err)
 		}
 		app.DB = db
 	}
@@ -135,6 +135,10 @@ func Bootstrap(cfg *config.Config) (*App, error) {
 		app.Mail.SetQueue(app.Queue)
 		mail.RegisterMailJob(app.Queue, app.Mail)
 	}
+
+	nm := notifications.NewManager()
+	nm.Register(notifications.NewMailChannel(app.Mail))
+	app.Notifications = nm
 
 	// Initialise Events dispatcher.
 	app.Events = events.New(zl)

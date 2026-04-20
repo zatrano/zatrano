@@ -5,26 +5,27 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"html"
 	"time"
 
 	"github.com/zatrano/zatrano/pkg/config"
-	"github.com/zatrano/zatrano/pkg/mail"
+	"github.com/zatrano/zatrano/pkg/notifications"
 	"gorm.io/gorm"
 )
 
 // EmailVerificationService handles email verification functionality
 type EmailVerificationService struct {
-	db   *gorm.DB
-	mail *mail.Manager
-	cfg  *config.Config
+	db     *gorm.DB
+	notify *notifications.Manager
+	cfg    *config.Config
 }
 
 // NewEmailVerificationService creates a new email verification service
-func NewEmailVerificationService(db *gorm.DB, mailer *mail.Manager, cfg *config.Config) *EmailVerificationService {
+func NewEmailVerificationService(db *gorm.DB, notify *notifications.Manager, cfg *config.Config) *EmailVerificationService {
 	return &EmailVerificationService{
-		db:   db,
-		mail: mailer,
-		cfg:  cfg,
+		db:     db,
+		notify: notify,
+		cfg:    cfg,
 	}
 }
 
@@ -75,10 +76,13 @@ func (s *EmailVerificationService) VerifyEmail(token string) error {
 
 // SendVerificationEmail sends email verification email
 func (s *EmailVerificationService) SendVerificationEmail(email, token string) error {
-	verificationURL := fmt.Sprintf("%s/verify-email?token=%s", "https://"+s.cfg.HTTPAddr, token)
+	if s.notify == nil {
+		return fmt.Errorf("email verification: notifications manager not configured")
+	}
+	verificationURL := fmt.Sprintf("https://%s/verify-email?token=%s", s.cfg.HTTPAddr, token)
 
 	subject := "Verify Your Email Address"
-	body := fmt.Sprintf(`
+	textBody := fmt.Sprintf(`
 Hello,
 
 Thank you for registering! Please verify your email address by clicking the link below:
@@ -93,19 +97,20 @@ Best regards,
 %s Team
 `, verificationURL, s.cfg.AppName)
 
-	msg := &mail.Message{
-		From: mail.Address{
-			Name:  s.cfg.AppName,
-			Email: s.cfg.Mail.FromEmail,
-		},
-		To: []mail.Address{
-			{Email: email},
-		},
-		Subject:  subject,
-		HTMLBody: body,
-	}
+	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
+<html><body>
+<p>Hello,</p>
+<p>Thank you for registering! Please <a href="%s">verify your email address</a>.</p>
+<p>This link will expire in 24 hours.</p>
+<p>If you did not create this account, please ignore this email.</p>
+<p>Best regards,<br>%s Team</p>
+</body></html>`, html.EscapeString(verificationURL), html.EscapeString(s.cfg.AppName))
 
-	return s.mail.Send(context.Background(), msg)
+	n := notifications.NewNotification(subject, textBody, email).
+		WithData("kind", "email_verification").
+		WithData("html", htmlBody)
+
+	return s.notify.SendToChannels(context.Background(), n, "mail")
 }
 
 // IsEmailVerified checks if the user's email is verified

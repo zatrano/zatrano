@@ -80,25 +80,25 @@ func probe(ctx context.Context, a *core.App) Status {
 	checks := map[string]any{}
 	ready := true
 
-	// PostgreSQL
+	// SQL database (driver from config)
 	switch {
 	case strings.TrimSpace(a.Config.DatabaseURL) == "" && !a.Config.DatabaseRequired:
-		checks["postgres"] = fiber.Map{"configured": false, "required": false, "ok": true}
+		checks["database"] = fiber.Map{"driver": a.Config.NormalizedDatabaseDriver(), "configured": false, "required": false, "ok": true}
 	case a.DB == nil:
-		checks["postgres"] = fiber.Map{"configured": true, "ok": false, "error": "gorm db is nil"}
+		checks["database"] = fiber.Map{"driver": a.Config.NormalizedDatabaseDriver(), "configured": true, "ok": false, "error": "gorm db is nil"}
 		ready = false
 	default:
 		sqlDB, err := a.DB.DB()
 		if err != nil {
-			checks["postgres"] = fiber.Map{"configured": true, "ok": false, "error": err.Error()}
+			checks["database"] = fiber.Map{"driver": a.Config.NormalizedDatabaseDriver(), "configured": true, "ok": false, "error": err.Error()}
 			ready = false
 			break
 		}
 		if err := sqlDB.PingContext(ctx); err != nil {
-			checks["postgres"] = fiber.Map{"configured": true, "ok": false, "error": err.Error()}
+			checks["database"] = fiber.Map{"driver": a.Config.NormalizedDatabaseDriver(), "configured": true, "ok": false, "error": err.Error()}
 			ready = false
 		} else {
-			checks["postgres"] = fiber.Map{"configured": true, "ok": true}
+			checks["database"] = fiber.Map{"driver": a.Config.NormalizedDatabaseDriver(), "configured": true, "ok": true}
 		}
 	}
 
@@ -119,8 +119,8 @@ func probe(ctx context.Context, a *core.App) Status {
 	}
 
 	if a.Config.DatabaseRequired {
-		if pg, ok := checks["postgres"].(fiber.Map); ok {
-			if o, _ := pg["ok"].(bool); !o {
+		if dbm, ok := checks["database"].(fiber.Map); ok {
+			if o, _ := dbm["ok"].(bool); !o {
 				ready = false
 			}
 		}

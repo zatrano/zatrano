@@ -22,6 +22,9 @@ type Config struct {
 	HTTPReadTimeout time.Duration `mapstructure:"http_read_timeout"`
 
 	DatabaseURL      string `mapstructure:"database_url"`
+	// DatabaseDriver selects the SQL backend: postgres | mysql | sqlserver | sqlite (default: postgres).
+	// Override with DATABASE_DRIVER or config database_driver.
+	DatabaseDriver   string `mapstructure:"database_driver"`
 	DatabaseRequired bool   `mapstructure:"database_required"`
 
 	RedisURL      string `mapstructure:"redis_url"`
@@ -36,7 +39,9 @@ type Config struct {
 	StaticURLPrefix string `mapstructure:"static_url_prefix"`
 
 	MigrationsDir string `mapstructure:"migrations_dir"`
-	SeedsDir      string `mapstructure:"seeds_dir"`
+	// MigrationsSource: embed (default) uses driver-specific SQL from pkg/migrations; file uses migrations_dir on disk.
+	MigrationsSource string `mapstructure:"migrations_source"`
+	SeedsDir         string `mapstructure:"seeds_dir"`
 	OpenAPIPath   string `mapstructure:"openapi_path"`
 
 	Security  Security  `mapstructure:"security"`
@@ -108,12 +113,14 @@ func Load(opts LoadOptions) (*Config, error) {
 	v.SetDefault("http_addr", ":8080")
 	v.SetDefault("http_read_timeout", 30*time.Second)
 	v.SetDefault("database_required", false)
+	v.SetDefault("database_driver", "")
 	v.SetDefault("redis_required", false)
 	v.SetDefault("log_level", "info")
 	v.SetDefault("log_development", envName == "dev")
 	v.SetDefault("static_path", "public")
 	v.SetDefault("static_url_prefix", "/static")
 	v.SetDefault("migrations_dir", "migrations")
+	v.SetDefault("migrations_source", "embed")
 	v.SetDefault("seeds_dir", "db/seeds")
 	v.SetDefault("openapi_path", "api/openapi.yaml")
 	v.SetDefault("security.session_enabled", true)
@@ -202,6 +209,12 @@ func (c *Config) validate() error {
 	if c.DatabaseRequired && strings.TrimSpace(c.DatabaseURL) == "" {
 		return fmt.Errorf("database_required is true but database_url is empty (set DATABASE_URL or config/database_url)")
 	}
+	if err := c.validateDatabaseDriver(); err != nil {
+		return err
+	}
+	if err := c.validateMigrationsSource(); err != nil {
+		return err
+	}
 	if c.RedisRequired && strings.TrimSpace(c.RedisURL) == "" {
 		return fmt.Errorf("redis_required is true but redis_url is empty (set REDIS_URL or config/redis_url)")
 	}
@@ -251,6 +264,7 @@ func oauthProviderConfigured(p OAuthProvider) bool {
 }
 
 func (c *Config) applyDerivedDefaults() {
+	c.DatabaseDriver = strings.ToLower(strings.TrimSpace(c.DatabaseDriver))
 	if runtime.GOOS == "windows" {
 		c.HTTP.GracefulRestart = false
 	}
@@ -279,6 +293,10 @@ func (c *Config) applyDerivedDefaults() {
 	if strings.TrimSpace(c.MigrationsDir) == "" {
 		c.MigrationsDir = "migrations"
 	}
+	if strings.TrimSpace(c.MigrationsSource) == "" {
+		c.MigrationsSource = "embed"
+	}
+	c.MigrationsSource = strings.ToLower(strings.TrimSpace(c.MigrationsSource))
 	if strings.TrimSpace(c.SeedsDir) == "" {
 		c.SeedsDir = "db/seeds"
 	}
@@ -303,4 +321,30 @@ func appendUniquePrefix(s []string, v string) []string {
 		}
 	}
 	return append(s, v)
+}
+
+// NormalizedDatabaseDriver returns the active SQL driver (default postgres).
+func (c *Config) NormalizedDatabaseDriver() string {
+	if strings.TrimSpace(c.DatabaseDriver) == "" {
+		return "postgres"
+	}
+	return c.DatabaseDriver
+}
+
+func (c *Config) validateDatabaseDriver() error {
+	switch c.NormalizedDatabaseDriver() {
+	case "postgres", "mysql", "sqlserver", "sqlite":
+		return nil
+	default:
+		return fmt.Errorf("invalid database_driver %q (use postgres, mysql, sqlserver, sqlite, or omit for postgres)", c.DatabaseDriver)
+	}
+}
+
+func (c *Config) validateMigrationsSource() error {
+	switch c.MigrationsSource {
+	case "embed", "file":
+		return nil
+	default:
+		return fmt.Errorf("invalid migrations_source %q (use embed or file)", c.MigrationsSource)
+	}
 }

@@ -130,7 +130,7 @@ func runConfigPrint(cmd *cobra.Command, _ []string) error {
 		case "lines", "":
 			keys := []string{
 				"env", "working_dir", "dotenv", "config_dir", "config_profile",
-				"http_addr", "openapi_path", "migrations_dir", "seeds_dir",
+				"http_addr", "openapi_path", "migrations_dir", "migrations_source", "seeds_dir",
 			}
 			for _, k := range keys {
 				_, _ = fmt.Fprintf(os.Stdout, "%s: %v\n", k, view[k])

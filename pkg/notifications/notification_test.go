@@ -87,6 +87,24 @@ func TestMailChannel_Send(t *testing.T) {
 	}
 }
 
+func TestMailChannel_Send_HTMLData(t *testing.T) {
+	sent := &mail.Message{}
+	driver := &mockMailDriver{sent: sent}
+	manager := mail.New(driver, mail.MailConfig{FromName: "Z", FromEmail: "z@example.com"}, zap.NewNop(), nil)
+	channel := NewMailChannel(manager)
+
+	notif := NewNotification("Sub", "plain text", "u@example.com").WithData("html", "<p>rich</p>")
+	if err := channel.Send(context.Background(), notif); err != nil {
+		t.Fatalf("MailChannel.Send failed: %v", err)
+	}
+	if sent.TextBody != "plain text" {
+		t.Fatalf("expected text body plain text, got %q", sent.TextBody)
+	}
+	if sent.HTMLBody != "<p>rich</p>" {
+		t.Fatalf("expected html from data, got %q", sent.HTMLBody)
+	}
+}
+
 func TestBaseNotification_WithData(t *testing.T) {
 	notif := NewNotification("Subject", "Body", "recipient").
 		WithData("key1", "value1").

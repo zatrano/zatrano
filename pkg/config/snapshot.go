@@ -10,6 +10,7 @@ func SanitizedSnapshot(c *Config) map[string]any {
 		"http_addr":         c.HTTPAddr,
 		"http_read_timeout": c.HTTPReadTimeout.String(),
 		"database_url":      MaskConnectionURL(c.DatabaseURL),
+		"database_driver":   c.NormalizedDatabaseDriver(),
 		"database_required": c.DatabaseRequired,
 		"redis_url":         MaskConnectionURL(c.RedisURL),
 		"redis_required":    c.RedisRequired,
@@ -17,7 +18,8 @@ func SanitizedSnapshot(c *Config) map[string]any {
 		"log_development":   c.LogDevelopment,
 		"static_path":       c.StaticPath,
 		"static_url_prefix": c.StaticURLPrefix,
-		"migrations_dir":    c.MigrationsDir,
+		"migrations_dir":     c.MigrationsDir,
+		"migrations_source": c.MigrationsSource,
 		"seeds_dir":         c.SeedsDir,
 		"openapi_path":      c.OpenAPIPath,
 		"http": map[string]any{

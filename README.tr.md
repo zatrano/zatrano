@@ -28,7 +28,7 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 
 - **Modül yolu:** `github.com/zatrano/zatrano`
 - **Go:** 1.25+
-- **Çekirdek yığın:** Fiber v3, PostgreSQL, Redis, GORM, Zap, golang-migrate (SQL migration), OpenAPI; isteğe bağlı GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
+- **Çekirdek yığın:** Fiber v3, **PostgreSQL / MySQL / SQLite / SQL Server** (`database_driver` + GORM), Redis, GORM, Zap, **golang-migrate** (sürücüye özel gömülü SQL: `pkg/migrations/sql/<sürücü>/`, `migrations_source`), OpenAPI; isteğe bağlı GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
 
 > **Durum:** aktif geliştirme. Genel Go API’leri **`pkg/`** altındadır; platform üzerine kurulan uygulamalar bu sözleşmeleri import eder.
 
@@ -63,6 +63,7 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 - [Storage / Dosya Yönetimi](#storage--dosya-yönetimi)
 - [View / Template Sistemi](#view--template-sistemi)
 - [Yapılandırma](#yapılandırma)
+  - [Veritabanı migrasyonları (SQL)](#veritabanı-migrasyonları-sql)
 - [Geliştirme](#geliştirme)
 - [Dokümantasyon](#dokümantasyon)
 - [Katkı](#katkı)
@@ -79,13 +80,13 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 | Web | Fiber HTML şablonları, CSRF, **validation** (`go-playground/validator`), flash, **CORS**, **rate limit**, **i18n** (JSON çeviriler), **cache** (Memory/Redis), güvenlik başlıkları, gzip, static |
 | **View Motoru** | Layout kalıtımı (`{{extends}}`), blok/bölüm sistemi, bileşen partial'ları, form builder yardımcıları, flash mesajlar, eski girdi yeniden doldurma, versiyonlanmış asset URL'leri, Vite/esbuild manifest entegrasyonu, HMR dev sunucu proxy |
 | API | REST + **OpenAPI 3** (`api/openapi.yaml`, `/docs`, `/openapi.yaml`), **Resource/Transformer** (model→JSON, hassas alanları gizle, ilişkileri şekillendir), **Standart response zarfı** ({data, meta, links}, JSON:API uyumlu), **Cursor pagination** (büyük dataset'ler için keyset), **Throttle** (kullanıcı/JWT subject rate limiting, Redis sayaçları), **API key yönetimi** (api_keys tablosu, middleware, rotasyon), **Versioning yöneticisi** (v1/, v2/ otomatik gruplar, config'den prefix) |
-| Kimlik | **Oturum (Redis) + CSRF**; `/api/v1/private/*` için **JWT**; **OAuth2** (Google/GitHub) tarayıcı girişi; **RBAC** (rol→izin, DB destekli); **Gate/Policy** (kaynak bazlı yetkilendirme); **Şifre Sıfırlama** (token tabanlı, süreli, mail entegrasyonu); **Email Doğrulama** (email_verified_at, doğrulama maili); **Brute Force Koruması** (IP+username rate limiting, Redis); **TOTP 2FA** (Google Authenticator uyumlu, QR kod üretimi); **Oturum Yönetimi** (aktif oturumları listele/sonlandır, cihaz bilgisi); **JWT Refresh Token'ları** (token rotasyonu, refresh token tablosu) |
+| Kimlik | **Oturum (Redis) + CSRF**; `/api/v1/private/*` için **JWT**; **OAuth2** (Google/GitHub) tarayıcı girişi; **RBAC** (rol→izin, DB destekli); **Gate/Policy** (kaynak bazlı yetkilendirme); **Şifre sıfırlama** / **e-posta doğrulama** (işlemsel e-posta **`pkg/notifications`** → **`mail`** kanalı, `App.Notifications` + `App.Mail`); **Brute Force Koruması** (IP+username rate limiting, Redis); **TOTP 2FA** (Google Authenticator uyumlu, QR kod üretimi); **Oturum Yönetimi** (aktif oturumları listele/sonlandır, cihaz bilgisi); **JWT Refresh Token'ları** (token rotasyonu, refresh token tablosu) |
 | **Test Altyapısı** | **HTTP test client** (Fiber.Test() sarmalama, Get/Post/WithToken, AssertStatus/AssertJSON), **Database factory** (gofakeit tabanlı test verisi üretimi, gen factory), **Transaction rollback** (TestSuite struct, SetupTest/TeardownTest), **In-memory cache driver** (Redis gerektirme), **Mail fake** (mailleri bellekte tut, gönderildiğini assert et), **Queue fake** (dispatch edilen job'ları assert et) |
 | Veri | **Generic Repository** deseni, otomatik soft-delete, **zincirleme Scope'lar**, Offset tabanlı sayfalama |
 | VT / Ops | GORM + **`db migrate` / `rollback` / `seed`** + **`db backup` / `restore`** |
 | **Depolama** | **Yerel / S3 / MinIO / Cloudflare R2** sürücüleri, **imzalı URL'ler**, **resim işleme** (yeniden boyutlandırma, kırpma, küçük resim), **Fiber middleware**, genel + özel diskler |
 | **HTTP Client** | Zincirleme API ile JSON odaklı HTTP istemcisi; **WithToken**, **WithHeader**, **WithTimeout**, `Get`/`Post`/`Put`, otomatik JSON marshal/unmarshal, 5xx hatalarında retry ve testler için fake transport |
-| Kuyruk | **Redis tabanlı** job kuyruğu, geciktirilmiş joblar (ZADD), otomatik retry + üssel geri çekilme, başarısız joblar (PostgreSQL) |
+| Kuyruk | **Redis tabanlı** job kuyruğu, geciktirilmiş joblar (ZADD), otomatik retry + üssel geri çekilme, başarısız joblar (veritabanı tablosu `zatrano_failed_jobs`, migration ile) |
 | **Zamanlanmış Görevler** | `robfig/cron/v3` sarmalaması, `schedule.Call(fn).Daily().At("08:00")`, `EveryMinute`/`Hourly`/`Daily`/`Weekly`/`Monthly`, Redis overlap kilidi |
 | Mail | **SMTP / Log** sürücüleri, HTML şablon + layout desteği, kuyruk entegrasyonu, ek dosya, Mailable deseni |
 | Events | **Senkron ve asenkron** event bus, `ShouldQueue` ile kuyruk tabanlı listener, `gen event` + `gen listener` |
@@ -99,7 +100,7 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 | Operasyon | `/health`, `/ready`, `/status` |
 | CLI | **`new`**, **`gen module`**, **`gen crud`**, **`gen request`**, **`gen policy`**, **`gen job`**, **`gen mail`**, **`gen event`**, **`gen listener`**, **`gen notification`**, **`gen model`**, **`gen middleware`**, **`gen resource`**, **`gen test`**, **`gen seeder`**, **`gen factory`**, **`gen command`**, **`gen graphql`**, `serve`, `db`, **`search import`**, **`cache`**, **`queue`**, **`mail`**, **`openapi export`**, `openapi validate`, **`jwt sign`**, **`api-key create`**, **`api-key list`**, **`api-key revoke`**, … |
 
-**Şu an hazır:** `serve`, `doctor`, **`routes`**, **`config print`**, **`config validate`**, **`verify`** (isteğe **`--race`**), `completion`, `version` / **`--version`**, **`new`**, **`gen module`** + **`gen crud`** + **`gen request`** + **`gen policy`** + **`gen job`** + **`gen mail`** + **`gen event`** + **`gen listener`** + **`gen notification`** + **`gen model`** + **`gen middleware`** + **`gen resource`** + **`gen test`** + **`gen seeder`** + **`gen factory`** + **`gen command`** + **`gen wire`** + **`gen view`** + **`gen graphql`**, **`db`** + **`db tenants`** (kiracı PostgreSQL şemasında migrate/rollback/create-schema), **`search import`** (Meilisearch/Typesense toplu indeks, `RegisterImporter`), **`pkg/features`** (bayraklar, rollout, şablon + HTTP middleware), **`pkg/graphql`** (gqlgen + dataloader kancaları), **`cache`** (Memory/Redis, Tags, middleware), **`queue`** (Redis FIFO, geciktirilmiş joblar, retry, başarısız joblar, worker), **`mail`** (SMTP/log, şablonlar, kuyruk, ek dosya, önizleme), **`events`** (senkron/asenkron gönderim, ShouldQueue, kuyruk tabanlı listener'lar), **`notifications`** (çok kanallı, Veritabanı/SMS/Push, okundu-takibi, Twilio/Netgsm/FCM/APNs), **`broadcast`** (WebSocket hub, Pusher tarzı protokol, private/presence JWT kanalları, SSE), **`audit`** (model activity + HTTP audit, JSON Patch farkları), **`pkg/search`** (PostgreSQL FTS scope'ları + harici sürücü), **`openapi validate`** + **`openapi export`**, **`jwt sign`**, **`storage`** (yerel/S3/MinIO/R2, imzalı URL'ler, resim işleme), **OAuth2**, **`http.*`** (CORS, rate limit, istek süresi, gövde boyutu), **`i18n`** (JSON yereller + Fiber yardımcıları), **validation** (generic `Validate[T]`, i18n hata mesajları, özel kurallar, form request'ler), **yetkilendirme** (RBAC rol→izin, Gate/Policy, `middleware.Can`, i18n 403), **çok kiracılık** (`middleware.ResolveTenant`, `pkg/tenant`, tenant kapsamlı repository), **view motoru** (`{{extends}}` layout kalıtımı, `{{block}}` bölümleri, `views/components/` partial'ları, form builder, flash mesajlar, eski girdi `{{old}}`, `{{asset}}` versiyonlanmış URL'ler, Vite/esbuild manifest + HMR), Redis + CSRF, JWT, Scalar **`/docs`**, **Air** (`.air.toml`).
+**Şu an hazır:** `serve`, `doctor`, **`routes`**, **`config print`**, **`config validate`**, **`verify`** (isteğe **`--race`**), `completion`, `version` / **`--version`**, **`new`**, **`gen module`** + **`gen crud`** + **`gen request`** + **`gen policy`** + **`gen job`** + **`gen mail`** + **`gen event`** + **`gen listener`** + **`gen notification`** + **`gen model`** + **`gen middleware`** + **`gen resource`** + **`gen test`** + **`gen seeder`** + **`gen factory`** + **`gen command`** + **`gen wire`** + **`gen view`** + **`gen graphql`**, **`db`** (golang-migrate; varsayılan **embed** SQL **`pkg/migrations/sql/<sürücü>/`**, isteğe **file** + `migrations_dir` / `--migrations`) + **`db tenants`** (kiracı PostgreSQL şemasında migrate/rollback/create-schema), **`search import`** (Meilisearch/Typesense toplu indeks, `RegisterImporter`), **`pkg/features`** (bayraklar, rollout, şablon + HTTP middleware), **`pkg/graphql`** (gqlgen + dataloader kancaları), **`cache`** (Memory/Redis, Tags, middleware), **`queue`** (Redis FIFO, geciktirilmiş joblar, retry, başarısız joblar, worker), **`mail`** (SMTP/log, şablonlar, kuyruk, ek dosya, önizleme), **`events`** (senkron/asenkron gönderim, ShouldQueue, kuyruk tabanlı listener'lar), **`notifications`** (çok kanallı, Veritabanı/SMS/Push, okundu-takibi, Twilio/Netgsm/FCM/APNs), **`broadcast`** (WebSocket hub, Pusher tarzı protokol, private/presence JWT kanalları, SSE), **`audit`** (model activity + HTTP audit, JSON Patch farkları), **`pkg/search`** (PostgreSQL FTS scope'ları + harici sürücü), **`openapi validate`** + **`openapi export`**, **`jwt sign`**, **`storage`** (yerel/S3/MinIO/R2, imzalı URL'ler, resim işleme), **OAuth2**, **`http.*`** (CORS, rate limit, istek süresi, gövde boyutu), **`i18n`** (JSON yereller + Fiber yardımcıları), **validation** (generic `Validate[T]`, i18n hata mesajları, özel kurallar, form request'ler), **yetkilendirme** (RBAC rol→izin, Gate/Policy, `middleware.Can`, i18n 403), **çok kiracılık** (`middleware.ResolveTenant`, `pkg/tenant`, tenant kapsamlı repository), **view motoru** (`{{extends}}` layout kalıtımı, `{{block}}` bölümleri, `views/components/` partial'ları, form builder, flash mesajlar, eski girdi `{{old}}`, `{{asset}}` versiyonlanmış URL'ler, Vite/esbuild manifest + HMR), Redis + CSRF, JWT, Scalar **`/docs`**, **Air** (`.air.toml`).
 
 ---
 
@@ -107,7 +108,7 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 
 | Yol | Amaç |
 |-----|------|
-| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/mail`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/zatrano`, `pkg/meta` | **Genel API** — uygulamalar import eder |
+| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/mail`, `pkg/notifications`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/database`, `pkg/migrations` (gömülü SQL; doğrudan import hedefi değil), `pkg/zatrano`, `pkg/meta` | **Genel API** — uygulamalar import eder |
 | `internal/cli`, `internal/db`, `internal/gen` | **CLI ve üreticiler** — uygulama import etmez |
 
 Üretilen projeler **`zatrano.Start`** + **`RegisterRoutes: routes.Register`** (`internal/routes/register.go`) veya ek rota yoksa **`zatrano.Run()`** kullanır.
@@ -117,9 +118,9 @@ Bu depo bilinçli olarak **“Fiber + birkaç middleware”** seviyesinde tutulm
 ## Gereksinimler
 
 - Go **1.25.0+**
-- **`db migrate`** ve GORM için **PostgreSQL**
+- **Bir veritabanı** — GORM ve `zatrano db migrate` için **PostgreSQL** (varsayılan), **MySQL**, **SQLite** veya **SQL Server** (`database_driver` + `database_url`; bkz. `pkg/database`, `config/examples/dev.yaml`)
 - **Redis** — oturum + CSRF için (yerelde isteğe bağlı; prod'da genelde zorunlu)
-- **PostgreSQL istemci araçları** — `zatrano db backup` ve `db restore` için `pg_dump`, `pg_restore`, `psql` PATH'te olmalı
+- **PostgreSQL istemci araçları** — `zatrano db backup` ve `db restore` yalnızca Postgres yedeği için: `pg_dump`, `pg_restore`, `psql` PATH'te olmalı
 
 ---
 
@@ -156,6 +157,12 @@ cp config/examples/dev.yaml config/dev.yaml
 cp .env.example .env
 ```
 
+**`DATABASE_URL`** (ve isteğe **`DATABASE_DRIVER`**) ayarlandıktan sonra şemayı uygulayın (varsayılan **gömülü** migrasyonlar — `migrations_source: embed`):
+
+```bash
+zatrano db migrate --env dev --config-dir config
+```
+
 OpenAPI doğrulama ve dışa aktarma:
 
 ```bash
@@ -176,7 +183,7 @@ go run ./cmd/zatrano openapi export --output api/openapi.merged.yaml
 | `zatrano config print` | Maskeli tam çıktı; **`--paths-only`** kısa özet (varsayılan **satırlar**; `json` / `yaml`) |
 | `zatrano config validate` | Yükle + **doğrula** (DB/Redis yok); CI için **`--quiet`** / **`-q`** (yalnızca çıkış kodu) |
 | `zatrano new <name>` | Yeni uygulama (`--module`, `--output`, yerel geliştirme için `--replace-zatrano`) |
-| `zatrano db migrate` | SQL migration uygula |
+| `zatrano db migrate` | Varsayılan olarak `pkg/migrations/sql/<sürücü>/` içindeki gömülü SQL migration’ları uygula (`migrations_source: embed`); disk için `file` + `migrations_dir` veya `--migrations` |
 | `zatrano db rollback` | Geri al (`--steps`) |
 | `zatrano db seed` | `db/seeds/*.sql` (yoksa no-op) |
 | `zatrano db backup` | `pg_dump` → dosya (`--format`, `--output` veya varsayılan `backups/`) |
@@ -194,8 +201,7 @@ go run ./cmd/zatrano openapi export --output api/openapi.merged.yaml
 | `zatrano gen event <name>` | Event struct üret (`modules/events/<name>_event.go`) — `events.Event` arayüzünü implemente eder |
 | `zatrano gen listener <name>` | Listener üret (`modules/listeners/<name>_listener.go`); asenkron için `--queued` bayrağı |
 | `zatrano gen notification <name>` | Çok kanallı gönderim için bildirim stub'ı üret (`modules/notifications/<name>.go`) |
-| `zatrano gen notification <name>` | Çok kanallı gönderim için bildirim stub'ı üret (`modules/notifications/<name>.go`) |
-| `zatrano gen model <name>` | Model scaffold ve SQL migration dosyaları üret (`pkg/repository/models/`, `migrations/`) |
+| `zatrano gen model <name>` | Model scaffold ve PostgreSQL migration iskeleti üret (`pkg/repository/models/`, `pkg/migrations/sql/postgres/`) |
 | `zatrano gen middleware <name>` | Fiber middleware stub'ı üret (`pkg/middleware/`) |
 | `zatrano gen resource <name>` | API resource transformer stub'ı üret (`pkg/resources/`) |
 | `zatrano gen test <name>` | Handler ve servis test stub'ları üret (`tests/`) |
@@ -356,7 +362,7 @@ zatrano db tenants create-schema --tenant acme
 zatrano db tenants migrate --tenant acme
 ```
 
-DSN'e **`options=-csearch_path=<şema>,public`** eklenir; **golang-migrate** DDL'i kiracı şemasında çalıştırır.
+DSN'e **`options=-csearch_path=<şema>,public`** eklenir; **golang-migrate** DDL'i kiracı şemasında çalıştırır (varsayılan **embed** kaynak: `pkg/migrations/sql/postgres/`; `--migrations` ile dosya kaynağına geçilebilir).
 
 **Not:** Ölçekte RLS, ayrı veritabanı veya paylaşımlı önbellek stratejisi uygulama sorumluluğundadır.
 
@@ -1071,13 +1077,15 @@ zatrano queue flush
 |---|---|---|
 | Hazır kuyruk | `LIST` (LPUSH/BRPOP) | FIFO job işleme |
 | Geciktirilmiş joblar | `SORTED SET` (ZADD) | Zaman bazlı zamanlama |
-| Başarısız joblar | PostgreSQL tablosu | Kalıcı hata kayıtları |
+| Başarısız joblar | Veritabanı tablosu (`zatrano_failed_jobs`, migration) | Kalıcı hata kayıtları |
 
 ---
 
 ## Mail Sistemi (E-posta)
 
 ZATRANO, HTML şablon desteği, asenkron gönderim için kuyruk entegrasyonu, ek dosya desteği ve yeniden kullanılabilir e-posta tanımları için Mailable deseni sunan **çok sürücülü bir mail sistemi** sağlar.
+
+**Bildirimler:** `core.Bootstrap`, **`App.Notifications`** (`*notifications.Manager`) oluşturur ve **`App.Mail`** üzerinden çalışan **`mail`** kanalını kaydeder. **`pkg/auth`** içindeki **şifre sıfırlama** ve **e-posta doğrulama** gönderimleri **`SendToChannels(..., "mail")`** ile yapılır (`notifications.NewNotification`, isteğe `WithData("html", …)`). Aynı yöneticiye veritabanı, SMS veya push kanalları eklenebilir.
 
 ### Yapılandırma
 
@@ -1592,7 +1600,15 @@ view:
 ## Yapılandırma
 
 - **`.env`**, **`config/{env}.yaml`**, **ortam değişkenleri** (ör. `SECURITY_JWT_SECRET`). Çoklu köken veya **`supported_locales`** gibi **listeler** için **YAML** tercih edin.
-- Ayrıntı: `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, `security.*`, `oauth.*` — `config/examples/dev.yaml`.
+- Ayrıntı: `migrations_source`, `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, `security.*`, `oauth.*` — `config/examples/dev.yaml`.
+
+### Veritabanı migrasyonları (SQL)
+
+- **`migrations_source`:** **`embed`** (varsayılan) — sürüm numaralı `*.up.sql` / `*.down.sql` dosyaları **`pkg/migrations/sql/<sürücü>/`** altında (`postgres`, `mysql`, `sqlite`, `sqlserver`). `zatrano db migrate`, **golang-migrate** + **`embed`/`iofs`** kaynağı ve **`database_driver`** ile aynı sürücüyü kullanır.
+- **`file`** — migrasyonları diskteki **`migrations_dir`** dizininden okur (**`zatrano new`** / scaffold projelerinde genelde `migrations_source: file` ve kök `migrations/`).
+- **`db migrate`**, **`db rollback`**, **`db tenants …`** komutlarında **`--migrations <dizin>`** o çalıştırma için **dosya** kaynağını zorunlu kılar (embed kullanılmaz).
+- **`zatrano gen model`** yalnızca **`pkg/migrations/sql/postgres/`** altına yeni `.up.sql` / `.down.sql` iskeleti yazar; diğer sürücüler için **embed** kullanıyorsanız dosyaları çoğaltıp uyarlamanız gerekir.
+- Depo kökündeki **`migrations/`** klasörü isteğe bağlı disk hazırlığı içindir; **`file`** modunda bkz. **`migrations/README.md`**.
 - Hata ayıklama: **`zatrano config print`** (tam, maskeli) veya **`zatrano config print --paths-only`** (sohbete yapıştırmaya uygun özet).
 - CI: önce **`zatrano config validate -q`** (hızlı YAML/ortam kontrolü), sonra **`zatrano openapi validate --merged`**, veya tam kapı için **`zatrano verify`** (Geliştirme bölümüne bakın).
 

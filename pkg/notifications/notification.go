@@ -2,6 +2,8 @@ package notifications
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 )
 
@@ -42,25 +44,29 @@ func (m *Manager) Register(channel Channel) {
 
 // Send dispatches the notification to all registered channels.
 func (m *Manager) Send(ctx context.Context, notif Notification) error {
+	var errs []error
 	for _, ch := range m.channels {
 		if err := ch.Send(ctx, notif); err != nil {
-			// Log error but continue sending to other channels
-			_ = err
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 // SendToChannels dispatches the notification to specific channels.
 func (m *Manager) SendToChannels(ctx context.Context, notif Notification, channelNames ...string) error {
+	var errs []error
 	for _, name := range channelNames {
-		if ch, ok := m.channels[name]; ok {
-			if err := ch.Send(ctx, notif); err != nil {
-				_ = err
-			}
+		ch, ok := m.channels[name]
+		if !ok {
+			errs = append(errs, fmt.Errorf("notifications: no channel named %q", name))
+			continue
+		}
+		if err := ch.Send(ctx, notif); err != nil {
+			errs = append(errs, err)
 		}
 	}
-	return nil
+	return errors.Join(errs...)
 }
 
 // BaseNotification is a simple notification implementation.

@@ -24,7 +24,8 @@ http_read_timeout: 30s
 #   graceful_restart: false  # Unix: tableflip + SIGUSR2 zero-downtime (needs real binary, not `go run`)
 #   graceful_restart_pid_file: ""  # optional PID file for systemd ExecReload patterns
 
-# Leave empty for local UI-only work; set DATABASE_URL when Postgres is up.
+# Leave empty for local UI-only work; set DATABASE_URL when your DB is up.
+# database_driver: postgres   # postgres | mysql | sqlserver | sqlite (default: postgres)
 database_url: ""
 database_required: false
 
@@ -34,6 +35,8 @@ redis_required: false
 log_level: info
 log_development: true
 
+# embed = driver-specific SQL from pkg/migrations (default); file = migrations_dir on disk
+migrations_source: embed
 migrations_dir: migrations
 seeds_dir: db/seeds
 openapi_path: api/openapi.yaml

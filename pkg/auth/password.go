@@ -5,26 +5,27 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"html"
 	"time"
 
 	"github.com/zatrano/zatrano/pkg/config"
-	"github.com/zatrano/zatrano/pkg/mail"
+	"github.com/zatrano/zatrano/pkg/notifications"
 	"gorm.io/gorm"
 )
 
 // PasswordResetService handles password reset functionality
 type PasswordResetService struct {
-	db   *gorm.DB
-	mail *mail.Manager
-	cfg  *config.Config
+	db     *gorm.DB
+	notify *notifications.Manager
+	cfg    *config.Config
 }
 
 // NewPasswordResetService creates a new password reset service
-func NewPasswordResetService(db *gorm.DB, mailer *mail.Manager, cfg *config.Config) *PasswordResetService {
+func NewPasswordResetService(db *gorm.DB, notify *notifications.Manager, cfg *config.Config) *PasswordResetService {
 	return &PasswordResetService{
-		db:   db,
-		mail: mailer,
-		cfg:  cfg,
+		db:     db,
+		notify: notify,
+		cfg:    cfg,
 	}
 }
 
@@ -100,10 +101,13 @@ func (s *PasswordResetService) ResetPassword(token, newPassword string) error {
 
 // SendResetEmail sends password reset email
 func (s *PasswordResetService) SendResetEmail(email, token string) error {
-	resetURL := fmt.Sprintf("%s/reset-password?token=%s", "https://"+s.cfg.HTTPAddr, token)
+	if s.notify == nil {
+		return fmt.Errorf("password reset: notifications manager not configured")
+	}
+	resetURL := fmt.Sprintf("https://%s/reset-password?token=%s", s.cfg.HTTPAddr, token)
 
 	subject := "Password Reset Request"
-	body := fmt.Sprintf(`
+	textBody := fmt.Sprintf(`
 Hello,
 
 You have requested to reset your password. Click the link below to reset your password:
@@ -118,19 +122,20 @@ Best regards,
 %s Team
 `, resetURL, s.cfg.AppName)
 
-	msg := &mail.Message{
-		From: mail.Address{
-			Name:  s.cfg.AppName,
-			Email: s.cfg.Mail.FromEmail,
-		},
-		To: []mail.Address{
-			{Email: email},
-		},
-		Subject:  subject,
-		HTMLBody: body,
-	}
+	htmlBody := fmt.Sprintf(`<!DOCTYPE html>
+<html><body>
+<p>Hello,</p>
+<p>You have requested to reset your password. <a href="%s">Click here to reset your password</a>.</p>
+<p>This link will expire in 1 hour.</p>
+<p>If you did not request this password reset, please ignore this email.</p>
+<p>Best regards,<br>%s Team</p>
+</body></html>`, html.EscapeString(resetURL), html.EscapeString(s.cfg.AppName))
 
-	return s.mail.Send(context.Background(), msg)
+	n := notifications.NewNotification(subject, textBody, email).
+		WithData("kind", "password_reset").
+		WithData("html", htmlBody)
+
+	return s.notify.SendToChannels(context.Background(), n, "mail")
 }
 
 // CleanExpiredTokens removes expired reset tokens

@@ -12,10 +12,11 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"github.com/zatrano/zatrano/pkg/config"
+	zdb "github.com/zatrano/zatrano/pkg/database"
 	"github.com/zatrano/zatrano/pkg/queue"
 )
 
@@ -119,15 +120,10 @@ func openRedisForQueue(cfg *config.Config) (*redis.Client, error) {
 }
 
 func openDBForQueue(cfg *config.Config) (*gorm.DB, error) {
-	u := strings.TrimSpace(cfg.DatabaseURL)
-	if u == "" {
+	if strings.TrimSpace(cfg.DatabaseURL) == "" {
 		return nil, nil // DB is optional
 	}
-	db, err := gorm.Open(postgres.Open(u), &gorm.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("postgres: %w", err)
-	}
-	return db, nil
+	return zdb.OpenGORM(cfg, logger.Default.LogMode(logger.Warn))
 }
 
 // ─── Implementations ──────────────────────────────────────────────────────

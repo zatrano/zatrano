@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
+	zdb "github.com/zatrano/zatrano/pkg/database"
 	"github.com/zatrano/zatrano/pkg/search"
 )
 
@@ -48,9 +48,12 @@ func runSearchImport(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	db, err := gorm.Open(postgres.Open(cfg.DatabaseURL), &gorm.Config{})
+	db, err := zdb.OpenGORM(cfg, logger.Default.LogMode(logger.Warn))
 	if err != nil {
-		return fmt.Errorf("postgres: %w", err)
+		return fmt.Errorf("database: %w", err)
+	}
+	if db == nil {
+		return fmt.Errorf("database: nil db")
 	}
 	model := strings.TrimSpace(args[0])
 	ctx := context.Background()

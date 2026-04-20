@@ -76,6 +76,7 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	printHTTPSummary(cfg)
 	printI18nSummary(cfg)
 	fmt.Printf("  database url:    %s\n", config.MaskConnectionURL(cfg.DatabaseURL))
+	fmt.Printf("  database driver: %s\n", cfg.NormalizedDatabaseDriver())
 	fmt.Printf("  redis url:       %s\n", config.MaskConnectionURL(cfg.RedisURL))
 	printOAuthSummary(cfg)
 	printViewSummary(cfg)

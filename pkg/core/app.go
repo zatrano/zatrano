@@ -16,6 +16,7 @@ import (
 	"github.com/zatrano/zatrano/pkg/features"
 	"github.com/zatrano/zatrano/pkg/i18n"
 	"github.com/zatrano/zatrano/pkg/mail"
+	"github.com/zatrano/zatrano/pkg/notifications"
 	"github.com/zatrano/zatrano/pkg/queue"
 	"github.com/zatrano/zatrano/pkg/search"
 	"github.com/zatrano/zatrano/pkg/view"
@@ -50,6 +51,9 @@ type App struct {
 
 	// Mail is the email sending manager (SMTP, log drivers).
 	Mail *mail.Manager
+
+	// Notifications routes outbound notifications (mail channel uses Mail).
+	Notifications *notifications.Manager
 
 	// Events is the event dispatcher (pub/sub bus).
 	Events *events.Dispatcher

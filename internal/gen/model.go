@@ -17,7 +17,7 @@ func Model(moduleRoot, baseDir, rawName string, dryRun bool) ([]string, error) {
 	pascal := snakeToPascal(name)
 	plural := strings.ReplaceAll(name, "_", "-") + "s"
 	modelDir := filepath.Join(moduleRoot, baseDir)
-	migDir := filepath.Join(moduleRoot, "migrations")
+	migDir := filepath.Join(moduleRoot, "pkg", "migrations", "sql", "postgres")
 	stamp := time.Now().UTC().Format("20060102150405")
 	modelPath := filepath.Join(modelDir, name+".go")
 	upPath := filepath.Join(migDir, stamp+"_"+name+".up.sql")

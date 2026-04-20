@@ -70,11 +70,13 @@ func runTenantsMigrate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	dir := cfg.MigrationsDir
-	if f, _ := cmd.Flags().GetString("migrations"); f != "" {
+	fileSrc := false
+	if f, _ := cmd.Flags().GetString("migrations"); strings.TrimSpace(f) != "" {
+		fileSrc = true
 		dir = f
 	}
 	steps, _ := cmd.Flags().GetInt("steps")
-	ver, dirty, err := db.MigrateUpWithSchema(cfg.DatabaseURL, dir, schema, steps)
+	ver, dirty, err := db.MigrateUpWithSchema(cfg, dir, schema, steps, fileSrc)
 	if err != nil {
 		return fmt.Errorf("tenant migrate: %w", err)
 	}
@@ -93,11 +95,13 @@ func runTenantsRollback(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	dir := cfg.MigrationsDir
-	if f, _ := cmd.Flags().GetString("migrations"); f != "" {
+	fileSrc := false
+	if f, _ := cmd.Flags().GetString("migrations"); strings.TrimSpace(f) != "" {
+		fileSrc = true
 		dir = f
 	}
 	steps, _ := cmd.Flags().GetInt("steps")
-	ver, dirty, err := db.MigrateDownWithSchema(cfg.DatabaseURL, dir, schema, steps)
+	ver, dirty, err := db.MigrateDownWithSchema(cfg, dir, schema, steps, fileSrc)
 	if err != nil {
 		return fmt.Errorf("tenant rollback: %w", err)
 	}
@@ -115,7 +119,7 @@ func runTenantsCreateSchema(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	if err := db.CreateTenantSchema(cfg.DatabaseURL, schema); err != nil {
+	if err := db.CreateTenantSchema(cfg, schema); err != nil {
 		return err
 	}
 	fmt.Printf("ok schema %q created (if not exists)\n", schema)

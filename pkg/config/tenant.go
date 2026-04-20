@@ -64,5 +64,8 @@ func (c *Config) validateTenant() error {
 	if strings.EqualFold(c.Tenant.Mode, "subdomain") && strings.TrimSpace(c.Tenant.SubdomainSuffix) == "" {
 		return fmt.Errorf("tenant.subdomain_suffix is required when tenant.mode is subdomain")
 	}
+	if strings.EqualFold(strings.TrimSpace(c.Tenant.Isolation), "schema") && c.NormalizedDatabaseDriver() != "postgres" {
+		return fmt.Errorf("tenant.isolation schema requires database_driver postgres (got %q)", c.NormalizedDatabaseDriver())
+	}
 	return nil
 }

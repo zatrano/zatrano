@@ -18,8 +18,10 @@ var dbCmd = &cobra.Command{
 var dbMigrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Apply SQL migrations (golang-migrate)",
-	Long:  `Runs *.up.sql migrations from migrations_dir (default ./migrations). Requires DATABASE_URL.`,
-	RunE:  runDBMigrate,
+	Long: `Runs versioned *.up.sql migrations. By default (migrations_source: embed) SQL is read from the
+embedded driver-specific set in pkg/migrations (postgres, mysql, sqlite, sqlserver). Use migrations_source: file
+and migrations_dir for disk-based migrations, or pass --migrations to force a directory. Requires DATABASE_URL.`,
+	RunE: runDBMigrate,
 }
 
 var dbRollbackCmd = &cobra.Command{
@@ -96,12 +98,14 @@ func runDBMigrate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	dir := cfg.MigrationsDir
-	if f, _ := cmd.Flags().GetString("migrations"); f != "" {
+	fileSrc := false
+	if f, _ := cmd.Flags().GetString("migrations"); strings.TrimSpace(f) != "" {
+		fileSrc = true
 		dir = f
 	}
-	ver, dirty, err := db.MigrateUp(cfg.DatabaseURL, dir, 0)
+	ver, dirty, err := db.MigrateUp(cfg, db.MigrateRequest{Dir: dir, FileSource: fileSrc, Steps: 0})
 	if err != nil {
-		return fmt.Errorf("migrate up: %w\n\nhint: ensure postgres is reachable and migrations use versioned filenames (e.g. 000001_name.up.sql)", err)
+		return fmt.Errorf("migrate up (driver=%s, source=%s): %w\n\nhint: ensure the database is reachable; embedded migrations live under pkg/migrations/sql/<driver>/", cfg.NormalizedDatabaseDriver(), strings.TrimSpace(cfg.MigrationsSource), err)
 	}
 	fmt.Printf("ok: version=%d dirty=%v\n", ver, dirty)
 	return nil
@@ -113,11 +117,13 @@ func runDBRollback(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	dir := cfg.MigrationsDir
-	if f, _ := cmd.Flags().GetString("migrations"); f != "" {
+	fileSrc := false
+	if f, _ := cmd.Flags().GetString("migrations"); strings.TrimSpace(f) != "" {
+		fileSrc = true
 		dir = f
 	}
 	steps, _ := cmd.Flags().GetInt("steps")
-	ver, dirty, err := db.MigrateDown(cfg.DatabaseURL, dir, steps)
+	ver, dirty, err := db.MigrateDown(cfg, db.MigrateRequest{Dir: dir, FileSource: fileSrc, Steps: steps})
 	if err != nil {
 		return fmt.Errorf("migrate down: %w", err)
 	}
@@ -134,7 +140,7 @@ func runDBSeed(cmd *cobra.Command, _ []string) error {
 	if f, _ := cmd.Flags().GetString("seeds"); f != "" {
 		dir = f
 	}
-	if err := db.RunSeeds(cfg.DatabaseURL, dir); err != nil {
+	if err := db.RunSeeds(cfg, dir); err != nil {
 		return fmt.Errorf("seed: %w\n\nhint: add ordered .sql files under %s", err, dir)
 	}
 	fmt.Println("ok: seeds finished (no-op if no .sql files)")
@@ -170,7 +176,7 @@ func runDBBackup(cmd *cobra.Command, _ []string) error {
 			return e
 		}
 	}
-	if err := db.Backup(cfg.DatabaseURL, out, f); err != nil {
+	if err := db.Backup(cfg, out, f); err != nil {
 		return err
 	}
 	fmt.Printf("ok: backup written to %s\n", out)
@@ -201,7 +207,7 @@ func runDBRestore(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("invalid --format %q", formatStr)
 	}
 	clean, _ := cmd.Flags().GetBool("clean")
-	if err := db.Restore(cfg.DatabaseURL, in, f, clean); err != nil {
+	if err := db.Restore(cfg, in, f, clean); err != nil {
 		return err
 	}
 	fmt.Println("ok: restore finished")

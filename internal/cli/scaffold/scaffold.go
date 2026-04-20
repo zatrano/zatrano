@@ -186,6 +186,7 @@ redis_required: false
 log_level: info
 log_development: true
 
+migrations_source: file
 migrations_dir: migrations
 seeds_dir: db/seeds
 openapi_path: api/openapi.yaml

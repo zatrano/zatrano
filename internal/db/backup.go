@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/zatrano/zatrano/pkg/config"
 )
 
 // BackupFormat selects pg_dump output format.
@@ -18,8 +20,12 @@ const (
 	FormatDirectory BackupFormat = "directory" // -Fd (directory archive)
 )
 
-// Backup runs pg_dump. Requires `pg_dump` on PATH (PostgreSQL client tools).
-func Backup(databaseURL, outPath string, format BackupFormat) error {
+// Backup runs pg_dump for PostgreSQL only. Requires `pg_dump` on PATH.
+func Backup(cfg *config.Config, outPath string, format BackupFormat) error {
+	if cfg.NormalizedDatabaseDriver() != "postgres" {
+		return fmt.Errorf("db backup supports database_driver postgres only (got %q); use mysqldump, sqlcmd, or sqlite backup for other engines", cfg.NormalizedDatabaseDriver())
+	}
+	databaseURL := cfg.DatabaseURL
 	if strings.TrimSpace(databaseURL) == "" {
 		return fmt.Errorf("database URL is empty (set DATABASE_URL)")
 	}
@@ -56,9 +62,12 @@ func Backup(databaseURL, outPath string, format BackupFormat) error {
 	return nil
 }
 
-// Restore loads a backup. Plain SQL uses psql -f; custom/directory use pg_restore.
-// Requires `psql` / `pg_restore` on PATH.
-func Restore(databaseURL, inputPath string, format BackupFormat, clean bool) error {
+// Restore loads a backup (PostgreSQL only). Plain SQL uses psql -f; custom/directory use pg_restore.
+func Restore(cfg *config.Config, inputPath string, format BackupFormat, clean bool) error {
+	if cfg.NormalizedDatabaseDriver() != "postgres" {
+		return fmt.Errorf("db restore supports database_driver postgres only (got %q)", cfg.NormalizedDatabaseDriver())
+	}
+	databaseURL := cfg.DatabaseURL
 	if strings.TrimSpace(databaseURL) == "" {
 		return fmt.Errorf("database URL is empty (set DATABASE_URL)")
 	}
@@ -136,4 +145,3 @@ func InferFormatFromPath(p string) BackupFormat {
 		return FormatCustom
 	}
 }
-

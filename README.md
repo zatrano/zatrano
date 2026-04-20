@@ -28,7 +28,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 
 - **Module path:** `github.com/zatrano/zatrano`
 - **Go:** 1.25+
-- **Core stack:** Fiber v3, PostgreSQL, Redis, GORM, Zap, golang-migrate (SQL migrations), OpenAPI; optional GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
+- **Core stack:** Fiber v3, **PostgreSQL / MySQL / SQLite / SQL Server** (via `database_driver` + GORM), Redis, GORM, Zap, **golang-migrate** (embedded **driver-specific** SQL under `pkg/migrations/sql/<driver>/`, configurable `migrations_source`), OpenAPI; optional GraphQL (gqlgen), AWS S3 SDK, OAuth2 (`x/oauth2`)
 
 > **Status:** active development. Public Go APIs live under **`pkg/`** so applications built on the platform import stable platform contracts.
 
@@ -63,6 +63,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 - [Storage / File Management](#storage--file-management)
 - [View / Template System](#view--template-system)
 - [Configuration](#configuration)
+  - [Database migrations (SQL)](#database-migrations-sql)
 - [Development](#development)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
@@ -79,7 +80,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 | Web | Fiber HTML templates, CSRF, **validation** (`go-playground/validator`), flash, **CORS**, **rate limit**, **i18n** (JSON locales), **cache** (Memory/Redis), security headers, gzip, static |
 | **View Engine** | Layout inheritance (`{{extends}}`), block/section system, component partials, form builder helpers, flash messages, old-input repopulation, versioned asset URLs, Vite/esbuild manifest integration, HMR dev server proxy |
 | API | REST + **OpenAPI 3** (`api/openapi.yaml`, `/docs`, `/openapi.yaml`), **Resource/Transformer** (model→JSON, hide sensitive fields, shape relations), **Standard response envelope** ({data, meta, links}, JSON:API compatible), **Cursor pagination** (keyset for large datasets), **Throttle** (user/JWT subject rate limiting, Redis counters), **API key management** (api_keys table, middleware, rotation), **Versioning manager** (v1/, v2/ auto groups, config-driven prefixes) |
-| Auth | **Session (Redis) + CSRF**; **JWT** for `/api/v1/private/*`; **OAuth2** (Google/GitHub) browser login; **RBAC** (role→permission, DB-backed); **Gate/Policy** (resource-based authorization); **Password Reset** (token-based, time-limited, mail integration); **Email Verification** (email_verified_at, verification mail); **Brute Force Protection** (IP+username rate limiting, Redis); **TOTP 2FA** (Google Authenticator compatible, QR code generation); **Session Management** (list/revoke active sessions, device info); **JWT Refresh Tokens** (token rotation, refresh token table) |
+| Auth | **Session (Redis) + CSRF**; **JWT** for `/api/v1/private/*`; **OAuth2** (Google/GitHub) browser login; **RBAC** (role→permission, DB-backed); **Gate/Policy** (resource-based authorization); **Password Reset** / **Email Verification** (transactional e-mail via **`pkg/notifications`** → **mail** channel on `App.Notifications`, backed by `App.Mail`); **Brute Force Protection** (IP+username rate limiting, Redis); **TOTP 2FA** (Google Authenticator compatible, QR code generation); **Session Management** (list/revoke active sessions, device info); **JWT Refresh Tokens** (token rotation, refresh token table) |
 | Cache | **Memory / Redis** drivers, **Tag-based** invalidation, **Middleware** support |
 | Queue | **Redis-backed** job queue, delayed jobs (ZADD), auto retry + exponential backoff, failed jobs (PostgreSQL) |
 | **Scheduled Tasks** | Cron scheduling with `robfig/cron/v3`, fluent `schedule.Call(fn).Daily().At("08:00")`, `EveryMinute`/`Hourly`/`Daily`/`Weekly`/`Monthly`, Redis overlap lock |
@@ -100,7 +101,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 | Ops | `/health`, `/ready`, `/status` |
 | CLI | **`new`**, **`gen module`**, **`gen crud`**, **`gen request`**, **`gen policy`**, **`gen job`**, **`gen mail`**, **`gen event`**, **`gen listener`**, **`gen notification`**, **`gen model`**, **`gen middleware`**, **`gen resource`**, **`gen test`**, **`gen seeder`**, **`gen factory`**, **`gen command`**, **`gen graphql`**, `serve`, `db`, **`search import`**, **`cache`**, **`queue`**, **`mail`**, **`openapi export`**, `openapi validate`, **`jwt sign`**, **`api-key create`**, **`api-key list`**, **`api-key revoke`**, … |
 
-**Implemented now:** `serve`, `doctor`, **`routes`**, **`config print`**, **`config validate`**, **`verify`** (optional **`--race`**), `completion`, `version` / **`--version`**, **`new`**, **`gen module`** + **`gen crud`** + **`gen request`** + **`gen policy`** + **`gen job`** + **`gen mail`** + **`gen event`** + **`gen listener`** + **`gen notification`** + **`gen model`** + **`gen middleware`** + **`gen resource`** + **`gen test`** + **`gen seeder`** + **`gen factory`** + **`gen command`** + **`gen wire`** + **`gen view`** + **`gen graphql`**, **`db`** + **`db tenants`** (per-tenant PostgreSQL schema migrate/rollback/create-schema), **`search import`** (Meilisearch/Typesense bulk index via `RegisterImporter`), **`pkg/features`** (flags, rollout, template + HTTP middleware), **`pkg/graphql`** (gqlgen + dataloader hooks), **`cache`** (Memory/Redis, Tags, middleware), **`queue`** (Redis FIFO, delayed jobs, retry, failed jobs, worker), **`mail`** (SMTP/log, templates, queue, attachments, preview), **`events`** (sync/async dispatch, ShouldQueue, queue-backed listeners), **`notifications`** (multi-channel, Database/SMS/Push, read-tracking, Twilio/Netgsm/FCM/APNs), **`broadcast`** (WebSocket hub, Pusher-style protocol, private/presence JWT channels, SSE), **`audit`** (model activity + HTTP audit, JSON Patch diffs), **`pkg/search`** (PostgreSQL FTS scopes + external drivers), **`openapi validate`** + **`openapi export`**, **`jwt sign`**, **`storage`** (local/S3/MinIO/R2, signed URLs, image processing), **OAuth2**, **`http.*`** (CORS, rate limit, request timeout, body limit), **`i18n`** (JSON locales + Fiber helpers), **validation** (generic `Validate[T]`, i18n errors, custom rules, form requests), **authorization** (RBAC role→permission, Gate/Policy, `middleware.Can`, i18n 403), **multi-tenancy** (`middleware.ResolveTenant`, `pkg/tenant`, tenant-scoped repository), **view engine** (`{{extends}}` layout inheritance, `{{block}}` sections, `views/components/` partials, form builder, flash messages, old-input `{{old}}`, `{{asset}}` versioned URLs, Vite/esbuild manifest + HMR), Redis session + CSRF, JWT, Scalar **`/docs`**, **Air** (`.air.toml`).
+**Implemented now:** `serve`, `doctor`, **`routes`**, **`config print`**, **`config validate`**, **`verify`** (optional **`--race`**), `completion`, `version` / **`--version`**, **`new`**, **`gen module`** + **`gen crud`** + **`gen request`** + **`gen policy`** + **`gen job`** + **`gen mail`** + **`gen event`** + **`gen listener`** + **`gen notification`** + **`gen model`** + **`gen middleware`** + **`gen resource`** + **`gen test`** + **`gen seeder`** + **`gen factory`** + **`gen command`** + **`gen wire`** + **`gen view`** + **`gen graphql`**, **`db`** (golang-migrate; default **embed** SQL from **`pkg/migrations/sql/<driver>/`**, optional **file** + `migrations_dir` / `--migrations`) + **`db tenants`** (per-tenant PostgreSQL schema migrate/rollback/create-schema), **`search import`** (Meilisearch/Typesense bulk index via `RegisterImporter`), **`pkg/features`** (flags, rollout, template + HTTP middleware), **`pkg/graphql`** (gqlgen + dataloader hooks), **`cache`** (Memory/Redis, Tags, middleware), **`queue`** (Redis FIFO, delayed jobs, retry, failed jobs, worker), **`mail`** (SMTP/log, templates, queue, attachments, preview), **`events`** (sync/async dispatch, ShouldQueue, queue-backed listeners), **`notifications`** (multi-channel, Database/SMS/Push, read-tracking, Twilio/Netgsm/FCM/APNs), **`broadcast`** (WebSocket hub, Pusher-style protocol, private/presence JWT channels, SSE), **`audit`** (model activity + HTTP audit, JSON Patch diffs), **`pkg/search`** (PostgreSQL FTS scopes + external drivers), **`openapi validate`** + **`openapi export`**, **`jwt sign`**, **`storage`** (local/S3/MinIO/R2, signed URLs, image processing), **OAuth2**, **`http.*`** (CORS, rate limit, request timeout, body limit), **`i18n`** (JSON locales + Fiber helpers), **validation** (generic `Validate[T]`, i18n errors, custom rules, form requests), **authorization** (RBAC role→permission, Gate/Policy, `middleware.Can`, i18n 403), **multi-tenancy** (`middleware.ResolveTenant`, `pkg/tenant`, tenant-scoped repository), **view engine** (`{{extends}}` layout inheritance, `{{block}}` sections, `views/components/` partials, form builder, flash messages, old-input `{{old}}`, `{{asset}}` versioned URLs, Vite/esbuild manifest + HMR), Redis session + CSRF, JWT, Scalar **`/docs`**, **Air** (`.air.toml`).
 
 ---
 
@@ -108,7 +109,7 @@ It is intentionally **more than “Fiber + middleware”**: the repo encodes opi
 
 | Path | Purpose |
 |------|---------|
-| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/mail`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/zatrano`, `pkg/meta` | **Public** — use from your apps |
+| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/mail`, `pkg/notifications`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/database`, `pkg/migrations` (embedded SQL; not a Go import target), `pkg/zatrano`, `pkg/meta` | **Public** — use from your apps |
 | `internal/cli`, `internal/db`, `internal/gen` | **CLI & generators** — not imported by apps |
 
 Generated apps use **`zatrano.Start`** with **`RegisterRoutes: routes.Register`** (see `internal/routes/register.go`) or **`zatrano.Run()`** when you do not inject routes.
@@ -118,7 +119,7 @@ Generated apps use **`zatrano.Start`** with **`RegisterRoutes: routes.Register`*
 ## Requirements
 
 - Go **1.25.0** or newer
-- **PostgreSQL** for `db migrate` / GORM URLs
+- **A database** for GORM and `zatrano db migrate` — **PostgreSQL** (default), **MySQL**, **SQLite**, or **SQL Server** (`database_driver` + `database_url`; see `pkg/database` and `config/examples/dev.yaml`)
 - **Redis** for session + CSRF (optional locally; required when you turn on `redis_url` / production sessions)
 - **PostgreSQL client tools** (`pg_dump`, `pg_restore`, `psql`) on PATH for `zatrano db backup` and `db restore`
 
@@ -157,6 +158,12 @@ cp config/examples/dev.yaml config/dev.yaml
 cp .env.example .env
 ```
 
+After **`DATABASE_URL`** (and optional **`DATABASE_DRIVER`**) are set, apply the built-in schema (defaults to **embedded** migrations — `migrations_source: embed`):
+
+```bash
+zatrano db migrate --env dev --config-dir config
+```
+
 Validate or export OpenAPI (export merges `api/openapi.yaml` with framework routes — same as live `/openapi.yaml`):
 
 ```bash
@@ -177,7 +184,7 @@ go run ./cmd/zatrano openapi export --output api/openapi.merged.yaml
 | `zatrano config print` | Effective config, **masked** secrets; **`--paths-only`** short summary (default **lines**; `json` / `yaml`) |
 | `zatrano config validate` | Load + **validate** only (no DB/Redis); **`--quiet`** / **`-q`** for CI exit code only |
 | `zatrano new <name>` | Scaffold app (`--module`, `--output`, `--replace-zatrano` for local dev) |
-| `zatrano db migrate` | Apply `migrations/*.up.sql` (golang-migrate) |
+| `zatrano db migrate` | Apply embedded driver-specific SQL from `pkg/migrations/sql/<driver>/` by default (`migrations_source: embed`); use `file` + `migrations_dir` or `--migrations` for disk-based SQL |
 | `zatrano db rollback` | Roll back (`--steps`) |
 | `zatrano db seed` | Run `db/seeds/*.sql` in one transaction (no-op if no `.sql` files) |
 | `zatrano db backup` | `pg_dump` → file/dir (`--format`: custom, plain, or directory; `--output` or default under `backups/`) |
@@ -195,8 +202,7 @@ go run ./cmd/zatrano openapi export --output api/openapi.merged.yaml
 | `zatrano gen event <name>` | Generate event struct (`modules/events/<name>_event.go`) implementing `events.Event` |
 | `zatrano gen notification <name>` | Generate a notification stub (`modules/notifications/<name>.go`) for multi-channel delivery |
 | `zatrano gen listener <name>` | Generate listener (`modules/listeners/<name>_listener.go`); use `--queued` for async |
-| `zatrano gen notification <name>` | Generate a notification stub (`modules/notifications/<name>.go`) for multi-channel delivery |
-| `zatrano gen model <name>` | Generate a model scaffold under `pkg/repository/models/` and SQL migration files under `migrations/` |
+| `zatrano gen model <name>` | Generate a model scaffold under `pkg/repository/models/` and PostgreSQL migration stubs under `pkg/migrations/sql/postgres/` |
 | `zatrano gen middleware <name>` | Generate a Fiber middleware stub under `pkg/middleware/` |
 | `zatrano gen resource <name>` | Generate an API resource transformer stub under `pkg/resources/` |
 | `zatrano gen test <name>` | Generate handler and service test stubs under `tests/` |
@@ -1098,13 +1104,15 @@ zatrano queue flush
 |---|---|---|
 | Ready queue | `LIST` (LPUSH/BRPOP) | FIFO job processing |
 | Delayed jobs | `SORTED SET` (ZADD) | Time-based scheduling |
-| Failed jobs | PostgreSQL table | Persistent failure records |
+| Failed jobs | Database table (`zatrano_failed_jobs` from migrations) | Persistent failure records |
 
 ---
 
 ## Mail System
 
 ZATRANO provides a **multi-driver mail system** with HTML template support, queue integration for async sending, attachments, and a Mailable pattern for reusable email definitions.
+
+**Notifications:** `core.Bootstrap` registers **`App.Notifications`** (`*notifications.Manager`) with a **`mail`** channel wired to **`App.Mail`**. Built-in **password reset** and **email verification** helpers in **`pkg/auth`** send through **`SendToChannels(..., "mail")`** (plain + optional HTML via `WithData("html", …)` on `notifications.NewNotification`). Add more channels (database, SMS, push) by registering them on the same manager.
 
 ### Configuration
 
@@ -1646,7 +1654,15 @@ view:
 ## Configuration
 
 - **`.env`**, **`config/{env}.yaml`**, **environment variables** (nested keys use underscores, e.g. `SECURITY_JWT_SECRET`). For **lists** (e.g. multiple CORS origins or **`supported_locales`**), prefer **YAML**; env overrides for slices vary by shell.
-- Key fields: `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, `security.*`, `oauth.*` (see `config/examples/dev.yaml`).
+- Key fields: `migrations_source`, `migrations_dir`, `seeds_dir`, `openapi_path`, **`http.*`**, **`i18n.*`**, `security.*`, `oauth.*` (see `config/examples/dev.yaml`).
+
+### Database migrations (SQL)
+
+- **`migrations_source`:** **`embed`** (default) — versioned `*.up.sql` / `*.down.sql` live under **`pkg/migrations/sql/<driver>/`** (`postgres`, `mysql`, `sqlite`, `sqlserver`). `zatrano db migrate` uses **golang-migrate** with an **`embed`/`iofs`** source and the same driver you set with **`database_driver`**.
+- **`file`** — read migrations from **`migrations_dir`** on disk (typical for **`zatrano new`** / scaffolded apps, which set `migrations_source: file` and ship starter SQL under `migrations/`).
+- **`--migrations <dir>`** on **`db migrate`**, **`db rollback`**, or **`db tenants …`** forces **file** mode from that directory (ignores embed for that invocation).
+- **`zatrano gen model`** writes new **`.up.sql` / `.down.sql`** stubs under **`pkg/migrations/sql/postgres/`** only; copy or adapt for other drivers if you rely on **embed** for those engines.
+- The repo-root **`migrations/`** folder is optional disk staging; see **`migrations/README.md`** when using **`file`** mode.
 - Debug: **`zatrano config print`** (full dump, redacted) or **`zatrano config print --paths-only`** (env, cwd, profile path, dirs — safe to paste in chat).
 - CI: **`zatrano config validate -q`** (fast YAML/env checks), then **`zatrano openapi validate --merged`**, or **`zatrano verify`** for the full gate (see Development).
 

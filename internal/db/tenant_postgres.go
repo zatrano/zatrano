@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+
+	"github.com/zatrano/zatrano/pkg/config"
 )
 
 var pgSchemaName = regexp.MustCompile(`^[a-z0-9][a-z0-9_]{0,62}$`)
@@ -16,6 +18,13 @@ func validatePGSchemaName(name string) error {
 	s := strings.ToLower(strings.TrimSpace(name))
 	if !pgSchemaName.MatchString(s) {
 		return fmt.Errorf("invalid PostgreSQL schema name %q (use [a-z0-9][a-z0-9_]*)", name)
+	}
+	return nil
+}
+
+func requirePostgresTenant(cfg *config.Config, cmd string) error {
+	if cfg.NormalizedDatabaseDriver() != "postgres" {
+		return fmt.Errorf("%s requires database_driver postgres (current %q)", cmd, cfg.NormalizedDatabaseDriver())
 	}
 	return nil
 }
@@ -38,30 +47,50 @@ func PostgresWithSearchPath(databaseURL, schema string) (string, error) {
 	return u.String(), nil
 }
 
-// MigrateUpWithSchema runs golang-migrate against databaseURL with search_path restricted to schema (and public for extensions).
-func MigrateUpWithSchema(databaseURL, migrationsDir, schema string, steps int) (version uint, dirty bool, err error) {
-	dsn, err := PostgresWithSearchPath(databaseURL, schema)
+// MigrateUpWithSchema runs golang-migrate against cfg with search_path restricted to schema (and public for extensions).
+// When migrationsFromCLI is true, file-based migrations are used from migrationsDir; otherwise behaviour follows cfg.MigrationsSource (embed vs file).
+func MigrateUpWithSchema(cfg *config.Config, migrationsDir, schema string, steps int, migrationsFromCLI bool) (version uint, dirty bool, err error) {
+	if err := requirePostgresTenant(cfg, "db tenants migrate"); err != nil {
+		return 0, false, err
+	}
+	dsn, err := PostgresWithSearchPath(cfg.DatabaseURL, schema)
 	if err != nil {
 		return 0, false, err
 	}
-	return MigrateUp(dsn, migrationsDir, steps)
+	return MigrateUp(cfg, MigrateRequest{
+		Dir:          migrationsDir,
+		FileSource:   migrationsFromCLI,
+		Steps:        steps,
+		DatabaseURL:  dsn,
+	})
 }
 
 // MigrateDownWithSchema rolls back migrations in the tenant schema search_path.
-func MigrateDownWithSchema(databaseURL, migrationsDir, schema string, steps int) (version uint, dirty bool, err error) {
-	dsn, err := PostgresWithSearchPath(databaseURL, schema)
+func MigrateDownWithSchema(cfg *config.Config, migrationsDir, schema string, steps int, migrationsFromCLI bool) (version uint, dirty bool, err error) {
+	if err := requirePostgresTenant(cfg, "db tenants rollback"); err != nil {
+		return 0, false, err
+	}
+	dsn, err := PostgresWithSearchPath(cfg.DatabaseURL, schema)
 	if err != nil {
 		return 0, false, err
 	}
-	return MigrateDown(dsn, migrationsDir, steps)
+	return MigrateDown(cfg, MigrateRequest{
+		Dir:          migrationsDir,
+		FileSource:   migrationsFromCLI,
+		Steps:        steps,
+		DatabaseURL:  dsn,
+	})
 }
 
 // CreateTenantSchema runs CREATE SCHEMA IF NOT EXISTS for PostgreSQL.
-func CreateTenantSchema(databaseURL, schema string) error {
+func CreateTenantSchema(cfg *config.Config, schema string) error {
+	if err := requirePostgresTenant(cfg, "db tenants create-schema"); err != nil {
+		return err
+	}
 	if err := validatePGSchemaName(schema); err != nil {
 		return err
 	}
-	db, err := sql.Open("pgx", databaseURL)
+	db, err := sql.Open("pgx", cfg.DatabaseURL)
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
 	}

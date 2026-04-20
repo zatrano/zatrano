@@ -7,13 +7,15 @@ import (
 	"sort"
 	"strings"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+
+	"github.com/zatrano/zatrano/pkg/config"
+	zdb "github.com/zatrano/zatrano/pkg/database"
 )
 
 // RunSeeds executes every *.sql file in dir in lexical order inside a single transaction.
-func RunSeeds(databaseURL, dir string) error {
-	if strings.TrimSpace(databaseURL) == "" {
+func RunSeeds(cfg *config.Config, dir string) error {
+	if strings.TrimSpace(cfg.DatabaseURL) == "" {
 		return fmt.Errorf("database URL is empty (set DATABASE_URL)")
 	}
 	fi, err := os.Stat(dir)
@@ -33,9 +35,17 @@ func RunSeeds(databaseURL, dir string) error {
 	}
 	sort.Strings(matches)
 
-	db, err := gorm.Open(postgres.Open(databaseURL), &gorm.Config{})
+	gormLog := logger.Default.LogMode(logger.Warn)
+	if cfg.LogDevelopment {
+		gormLog = logger.Default.LogMode(logger.Info)
+	}
+
+	db, err := zdb.OpenGORM(cfg, gormLog)
 	if err != nil {
 		return fmt.Errorf("gorm open: %w", err)
+	}
+	if db == nil {
+		return fmt.Errorf("gorm open: nil db")
 	}
 	sqlDB, err := db.DB()
 	if err != nil {
@@ -63,4 +73,3 @@ func RunSeeds(databaseURL, dir string) error {
 	}
 	return nil
 }
-
