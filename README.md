@@ -28,27 +28,27 @@
 
 ## Overview
 
+**ZATRANO** is an opinionated **Go backend platform** for teams that want **one consistent way** to ship, configure, migrate, and operate **modular monoliths** or **HTTP-first services**—without rebuilding sessions, queues, mail plumbing, and OpenAPI docs in every repository.
+
 ### What ZATRANO is
 
-**ZATRANO** is a **Go backend platform**: a curated stack, shared conventions, and tooling so you can ship **modular monoliths** or **HTTP-centric services** without reinventing the same infrastructure in every repo. It is an **integrated product layer**—not only an HTTP server—covering **security & auth**, **relational data** (GORM, multi-engine SQL, migrations), **Redis-backed** cache/queue/session patterns, **mail & notifications**, **events**, **optional GraphQL**, **OpenAPI** docs, **multi-tenancy**, **audit**, **feature flags**, **broadcasting**, and more.
+The project combines a **runtime** (Fiber), **persistence** (GORM across multiple SQL engines with **golang-migrate**), **Redis** patterns for **sessions**, **cache**, and **queues**, **mail & notifications**, an **event bus**, **OpenAPI** documentation, **optional GraphQL**, **multi-tenancy**, **audit**, **feature flags**, **real-time broadcasting** (WebSocket / SSE), and production-minded defaults—together with a **CLI** (`zatrano`) and **generators** that scaffold modules, CRUD, views, jobs, policies, and **wire** markers so structure stays uniform across teams.
 
-You also get a **first-class CLI** (`zatrano`) and **code generators** that scaffold modules, CRUD, views, jobs, policies, and wire markers so the whole team follows the same layout.
-
-The surface you import from application code lives under **`pkg/`**. This repository additionally contains **`internal/cli`**, **`internal/gen`**, and **embedded SQL migrations** applied with **`zatrano db migrate`**.
+Application code imports the **public contract** from **`pkg/`**. This repository also ships **`internal/cli`**, **`internal/gen`**, and **embedded SQL migrations** consumed by **`zatrano db migrate`**.
 
 ### What it is not
 
 | | |
-|---|-----|
-| **Not** a “tiny framework” | You adopt **opinions and defaults** (sessions/CSRF, RBAC primitives, migration layout, OpenAPI + Scalar, etc.). The goal is velocity and consistency—not a blank router. |
-| **Not** your domain layer | It gives **structure** (handler → service → repository), cross-cutting services, and templates—you still own **business rules**, aggregates, and integrations. |
-| **Not** a microservices toolkit | It targets **modular monoliths** and **well-factored services**; it does not prescribe service mesh, orchestration, or split deployments. |
+|---|---|
+| **Not a minimal router** | You adopt **defaults and conventions** (sessions/CSRF, RBAC building blocks, migration layout, OpenAPI + Scalar, and more). The goal is **predictable delivery**, not a blank slate. |
+| **Not your domain model** | You receive **layering** (handler → service → repository) and cross-cutting helpers; **business rules**, aggregates, and external integrations remain **your code**. |
+| **Not a microservices framework** | The sweet spot is **modular monoliths** and **well-factored HTTP services**. It does **not** prescribe service mesh, orchestration, or a particular deployment topology. |
 
-### How you work with it
+### Adoption path
 
-1. **Embed the platform** — depend on `github.com/zatrano/zatrano`, bootstrap with **`pkg/config`** + **`pkg/core`**, mount routes via **`zatrano.Start`** (or run the stock server with **`zatrano.Run()`** when you have no custom routes).
-2. **Generate and wire** — use **`zatrano new`** / **`zatrano gen …`** and the `zatrano:wire` markers so modules register in one place.
-3. **Operate** — use **`zatrano db migrate`**, **`doctor`**, **`config validate`**, health endpoints, and the feature sections below for queues, tenants, mail, and backups.
+1. **Add the dependency** — require `github.com/zatrano/zatrano`, bootstrap with **`pkg/config`** and **`pkg/core`**, register routes through **`zatrano.Start`** (or use **`zatrano.Run()`** when you have no custom routes).
+2. **Scaffold and wire** — use **`zatrano new`** / **`zatrano gen …`** plus **`zatrano:wire`** markers so modules mount from a single registration point.
+3. **Run and observe** — apply schema with **`zatrano db migrate`**, validate configuration with **`doctor`** / **`config validate`**, expose **`/health`** / **`/ready`**, and use the sections below for queues, tenants, mail, and backups.
 
 ### Stack at a glance
 
@@ -57,10 +57,10 @@ The surface you import from application code lives under **`pkg/`**. This reposi
 | **Module** | `github.com/zatrano/zatrano` |
 | **Go** | 1.25+ |
 | **HTTP & APIs** | Fiber v3, OpenAPI 3, optional GraphQL (gqlgen) |
-| **Data** | GORM + supported SQL engines ([Database](#database)); **golang-migrate** via `zatrano db migrate` / `rollback` |
-| **Infrastructure patterns** | Redis (sessions, cache, queues), Zap structured logs, optional AWS S3 SDK, OAuth2 (`x/oauth2`) |
+| **Data** | GORM + supported SQL engines ([Database](#database)); schema changes via **golang-migrate** (`zatrano db migrate` / `rollback`) |
+| **Shared infrastructure** | Redis (sessions, cache, queues), Zap structured logging, optional AWS S3 SDK, OAuth2 (`x/oauth2`) |
 
-> **Status:** Active development. Treat **`pkg/`** as the public API for applications built on the platform.
+> **Status:** Active development. Treat **`pkg/`** as the **stable public surface** for applications that embed the platform.
 
 ### Maintainer
 
@@ -139,27 +139,27 @@ The surface you import from application code lives under **`pkg/`**. This reposi
 
 ## Layout (`pkg/` vs `internal/`)
 
-| Path | Purpose |
-|------|---------|
-| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/mail`, `pkg/notifications`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/database`, `pkg/migrations` (embedded SQL; not a Go import target), `pkg/zatrano`, `pkg/meta` | **Public** — use from your apps |
-| `internal/cli`, `internal/db`, `internal/gen` | **CLI & generators** — not imported by apps |
+| Path | Role |
+|------|------|
+| `pkg/config`, `pkg/core`, `pkg/server`, `pkg/health`, `pkg/middleware`, `pkg/security`, `pkg/auth`, `pkg/cache`, `pkg/queue`, `pkg/mail`, `pkg/notifications`, `pkg/events`, `pkg/broadcast`, `pkg/tenant`, `pkg/audit`, `pkg/search`, `pkg/features`, `pkg/graphql`, `pkg/oauth`, `pkg/openapi`, `pkg/i18n`, `pkg/validation`, `pkg/storage`, `pkg/database`, `pkg/migrations` (embedded SQL; not a Go import target), `pkg/zatrano`, `pkg/meta` | **Public API (`pkg/`)** — import from application code |
+| `internal/cli`, `internal/db`, `internal/gen` | **CLI & code generators** — not imported by running services |
 
-Generated apps use **`zatrano.Start`** with **`RegisterRoutes: routes.Register`** (see `internal/routes/register.go`) or **`zatrano.Run()`** when you do not inject routes.
+Scaffolded applications call **`zatrano.Start`** with **`RegisterRoutes: routes.Register`** (see `internal/routes/register.go`). Use **`zatrano.Run()`** when you do not inject custom routes.
 
 ---
 
 ## Requirements
 
-- Go **1.25.0** or newer
-- **A database** for GORM and `zatrano db migrate` — see [Database](#database)
-- **Redis** for session + CSRF (optional locally; required when you turn on `redis_url` / production sessions)
-- **PostgreSQL client tools** (`pg_dump`, `pg_restore`, `psql`) on PATH for `zatrano db backup` and `db restore`
+- Go **1.25.0** or later
+- **SQL database** — GORM and `zatrano db migrate`; see [Database](#database)
+- **Redis** — sessions and CSRF (optional in local development; typically required in production when `redis_url` is set)
+- **PostgreSQL client tools** — for `zatrano db backup` / `db restore` only: `pg_dump`, `pg_restore`, `psql` must be available on **`PATH`**
 
 ---
 
 ## Database
 
-ZATRANO connects with **GORM** (`pkg/database`) and applies schema changes with **`zatrano db migrate`** / **`db rollback`** using **golang-migrate**.
+Application data access uses **GORM** (`pkg/database`). Schema revisions are applied or rolled back with **`zatrano db migrate`** / **`db rollback`** through **golang-migrate**.
 
 ### Supported engines
 
