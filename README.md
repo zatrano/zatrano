@@ -62,7 +62,7 @@ Application code imports the **public contract** from **`pkg/`**. This repositor
 
 > **Status:** Active development. Treat **`pkg/`** as the **stable public surface** for applications that embed the platform.
 
-### Maintainer
+### Developer & Project Owner:
 
 **Serhan KARAKOÇ** — [github.com/serhankarakoc](https://github.com/serhankarakoc)
 
