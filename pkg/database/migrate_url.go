@@ -26,11 +26,6 @@ func MigrateURL(cfg *config.Config) (string, error) {
 			return u, nil
 		}
 		return "mysql://" + u, nil
-	case "sqlserver":
-		if !strings.HasPrefix(strings.ToLower(u), "sqlserver://") {
-			return "", fmt.Errorf("sqlserver database_url must start with sqlserver://")
-		}
-		return u, nil
 	case "sqlite":
 		lo := strings.ToLower(u)
 		if strings.HasPrefix(lo, "sqlite3://") {

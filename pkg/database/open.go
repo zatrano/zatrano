@@ -9,7 +9,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
-	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -34,15 +33,6 @@ func OpenGORM(cfg *config.Config, gormLog logger.Interface) (*gorm.DB, error) {
 		db, err := gorm.Open(mysql.Open(dsn), gc)
 		if err != nil {
 			return nil, fmt.Errorf("mysql: %w", err)
-		}
-		return db, nil
-	case "sqlserver":
-		if !strings.HasPrefix(strings.ToLower(u), "sqlserver://") {
-			return nil, fmt.Errorf("sqlserver database_url must start with sqlserver:// (see https://github.com/microsoft/go-mssqldb#connection-urls)")
-		}
-		db, err := gorm.Open(sqlserver.Open(u), gc)
-		if err != nil {
-			return nil, fmt.Errorf("sqlserver: %w", err)
 		}
 		return db, nil
 	case "sqlite":

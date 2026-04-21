@@ -22,7 +22,7 @@ type Config struct {
 	HTTPReadTimeout time.Duration `mapstructure:"http_read_timeout"`
 
 	DatabaseURL      string `mapstructure:"database_url"`
-	// DatabaseDriver selects the SQL backend: postgres | mysql | sqlserver | sqlite (default: postgres).
+	// DatabaseDriver selects the SQL backend: postgres | mysql | sqlite (default: postgres).
 	// Override with DATABASE_DRIVER or config database_driver.
 	DatabaseDriver   string `mapstructure:"database_driver"`
 	DatabaseRequired bool   `mapstructure:"database_required"`
@@ -342,10 +342,10 @@ func (c *Config) NormalizedDatabaseDriver() string {
 
 func (c *Config) validateDatabaseDriver() error {
 	switch c.NormalizedDatabaseDriver() {
-	case "postgres", "mysql", "sqlserver", "sqlite":
+	case "postgres", "mysql", "sqlite":
 		return nil
 	default:
-		return fmt.Errorf("invalid database_driver %q (use postgres, mysql, sqlserver, sqlite, or omit for postgres)", c.DatabaseDriver)
+		return fmt.Errorf("invalid database_driver %q (use postgres, mysql, sqlite, or omit for postgres)", c.DatabaseDriver)
 	}
 }
 

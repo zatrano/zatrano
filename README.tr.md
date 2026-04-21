@@ -8,7 +8,6 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 <br>
 [![GORM](https://img.shields.io/badge/GORM-632CA6?style=for-the-badge)](https://gorm.io/)
@@ -122,7 +121,7 @@ Uygulamanızın **`import` ettiği kamu API’si** **`pkg/`** altındadır. Bu r
 | Kimlik | **Oturum (Redis) + CSRF**; `/api/v1/private/*` için **JWT**; **OAuth2** (Google/GitHub) tarayıcı akışı; **RBAC** (rol→izin, veritabanı destekli); **Gate/Policy** (kaynak tabanlı yetkilendirme); **şifre sıfırlama** / **e-posta doğrulama** (işlemsel e-posta: **`pkg/notifications`** → **`mail`** kanalı, `App.Notifications` + `App.Mail`); **kaba kuvvet koruması** (IP + kullanıcı adı hız sınırı, Redis); **TOTP 2FA** (Google Authenticator uyumlu, QR kod); **oturum yönetimi** (listeleme / sonlandırma, cihaz bilgisi); **JWT yenileme belirteçleri** (rotasyon, `refresh_token` tablosu) |
 | **Test Altyapısı** | **HTTP test client** (Fiber.Test() sarmalama, Get/Post/WithToken, AssertStatus/AssertJSON), **Database factory** (gofakeit tabanlı test verisi üretimi, gen factory), **Transaction rollback** (TestSuite struct, SetupTest/TeardownTest), **In-memory cache driver** (Redis gerektirme), **Mail fake** (mailleri bellekte tut, gönderildiğini assert et), **Queue fake** (dispatch edilen job'ları assert et) |
 | Veri | **Generic Repository** deseni, otomatik soft delete, **birleştirilebilir Scope'lar**, offset tabanlı sayfalama |
-| Veritabanı ve operasyon | **PostgreSQL · MySQL · SQLite · SQL Server** (`database_driver` + GORM); **`db migrate` / `rollback`** (varsayılan **embed** SQL: **`pkg/migrations/sql/<sürücü>/`**), **`seed`**, **`db backup` / `restore`** (PostgreSQL istemci araçları) |
+| Veritabanı ve operasyon | **PostgreSQL · MySQL · SQLite** (`database_driver` + GORM); **`db migrate` / `rollback`** (varsayılan **embed** SQL: **`pkg/migrations/sql/<sürücü>/`**), **`seed`**, **`db backup` / `restore`** (PostgreSQL istemci araçları) |
 | **Depolama** | **Yerel / S3 / MinIO / Cloudflare R2** sürücüleri, **imzalı URL'ler**, **resim işleme** (yeniden boyutlandırma, kırpma, küçük resim), **Fiber middleware**, genel + özel diskler |
 | **HTTP istemcisi** | Akıcı (fluent) API ile JSON odaklı HTTP istemcisi; **WithToken**, **WithHeader**, **WithTimeout**, `Get`/`Post`/`Put`, otomatik JSON serileştirme / ayrıştırma, 5xx yanıtlarında yeniden deneme ve testler için sahte (fake) taşıma katmanı |
 | Kuyruk | **Redis tabanlı** job kuyruğu, geciktirilmiş joblar (ZADD), otomatik retry + üssel geri çekilme, başarısız joblar (veritabanı tablosu `zatrano_failed_jobs`, migration ile) |
@@ -384,13 +383,12 @@ Uygulama veritabanı erişimi **GORM** (`pkg/database`) üzerinden yapılır. Ş
 | **PostgreSQL** | `postgres` (boş / varsayılan) | Birincil geliştirme ve test hedefi |
 | **MySQL** | `mysql` | |
 | **SQLite** | `sqlite` | Yerel araçlar ve testler için uygun |
-| **SQL Server** | `sqlserver` | `database_url` için `go-mssqldb` dokümantasyonundaki `sqlserver://` biçimi |
 
 **`database_driver`** ve **`database_url`** değerlerini YAML veya ortam değişkenleriyle verin. Örnekler: **`config/examples/dev.yaml`**; doğrulama ve normalizasyon: **`pkg/config`**.
 
 ### Migrasyon SQL düzeni
 
-Sürücü başına sürümlü **`*.up.sql`** / **`*.down.sql`** dosyaları **[`pkg/migrations/sql/`](pkg/migrations/sql/)** altında (`postgres/`, `mysql/`, `sqlite/`, `sqlserver/`). **`migrations_source: embed`** (varsayılan) iken CLI, yapılandırılan sürücüye ait gömülü ağacı kullanır. **`migrations_source: file`** ve **`migrations_dir`** ile disk üzerindeki migrasyonları okuyabilirsiniz (iskelet projelerde yaygın); **`db migrate`**, **`db rollback`** veya **`db tenants …`** komutlarında **`--migrations <dizin>`** yalnızca ilgili çalıştırma için dizin seçer.
+Sürücü başına sürümlü **`*.up.sql`** / **`*.down.sql`** dosyaları **[`pkg/migrations/sql/`](pkg/migrations/sql/)** altında (`postgres/`, `mysql/`, `sqlite/`). **`migrations_source: embed`** (varsayılan) iken CLI, yapılandırılan sürücüye ait gömülü ağacı kullanır. **`migrations_source: file`** ve **`migrations_dir`** ile disk üzerindeki migrasyonları okuyabilirsiniz (iskelet projelerde yaygın); **`db migrate`**, **`db rollback`** veya **`db tenants …`** komutlarında **`--migrations <dizin>`** yalnızca ilgili çalıştırma için dizin seçer.
 
 **`migrations_source`**, tohumlar ve **`zatrano gen model`** yolları için bkz. [Yapılandırma](#yapılandırma) altındaki **[Veritabanı migrasyonları (SQL)](#veritabanı-migrasyonları-sql)**.
 
@@ -1980,7 +1978,7 @@ zatrano storage:clear local --force
 
 Desteklenen motorlar, **`database_driver`** ve **`database_url`** için bkz. **[Veritabanı](#veritabanı)**.
 
-- **`migrations_source`:** **`embed`** (varsayılan) — sürüm numaralı `*.up.sql` / `*.down.sql` dosyaları **`pkg/migrations/sql/<sürücü>/`** altında (`postgres`, `mysql`, `sqlite`, `sqlserver`). `zatrano db migrate`, **golang-migrate** + **`embed`/`iofs`** kaynağı ve **`database_driver`** ile aynı sürücüyü kullanır.
+- **`migrations_source`:** **`embed`** (varsayılan) — sürüm numaralı `*.up.sql` / `*.down.sql` dosyaları **`pkg/migrations/sql/<sürücü>/`** altında (`postgres`, `mysql`, `sqlite`). `zatrano db migrate`, **golang-migrate** + **`embed`/`iofs`** kaynağı ve **`database_driver`** ile aynı sürücüyü kullanır.
 - **`file`** — migrasyonları diskteki **`migrations_dir`** dizininden okur (**`zatrano new`** / scaffold projelerinde genelde `migrations_source: file` ve kök `migrations/`).
 - **`db migrate`**, **`db rollback`**, **`db tenants …`** komutlarında **`--migrations <dizin>`** o çalıştırma için **dosya** kaynağını zorunlu kılar (embed kullanılmaz).
 - **`zatrano gen model`** yalnızca **`pkg/migrations/sql/postgres/`** altına yeni `.up.sql` / `.down.sql` iskeleti yazar; diğer sürücüler için **embed** kullanıyorsanız dosyaları çoğaltıp uyarlamanız gerekir.

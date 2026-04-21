@@ -8,7 +8,6 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoftsqlserver&logoColor=white)](https://www.microsoft.com/sql-server)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 <br>
 [![GORM](https://img.shields.io/badge/GORM-632CA6?style=for-the-badge)](https://gorm.io/)
@@ -134,7 +133,7 @@ Application code imports the **public contract** from **`pkg/`**. This repositor
 | **GraphQL** | **gqlgen** schema-first (`api/graphql/*.graphqls`, `gqlgen.yml`), **`/graphql`** via Fiber **`adaptor`**, optional **GraphiQL** playground, **`graph-gophers/dataloader`** hooks (**`Loaders`**, **`WithLoaders`**), **`zatrano gen graphql <Model>`** |
 | **Testing** | **HTTP test client** (Fiber.Test() wrapper, Get/Post/WithToken, AssertStatus/AssertJSON), **Database factory** (gofakeit-based test data, gen factory), **Transaction rollback** (TestSuite struct, SetupTest/TeardownTest), **In-memory cache driver** (no Redis required), **Mail fake** (captures emails in memory, assert sent), **Queue fake** (captures dispatched jobs, assert dispatched) |
 | Data | **Generic Repository** pattern, automated soft-deletes, **chainable Scopes**, Offset-based pagination |
-| DB / Ops | **PostgreSQL · MySQL · SQLite · SQL Server** (`database_driver` + GORM); **`zatrano db migrate` / `rollback`** (default **embed** SQL in **`pkg/migrations/sql/<driver>/`**), **`db seed`**, **`db backup` / `restore`** (Postgres CLI tools) |
+| DB / Ops | **PostgreSQL · MySQL · SQLite** (`database_driver` + GORM); **`zatrano db migrate` / `rollback`** (default **embed** SQL in **`pkg/migrations/sql/<driver>/`**), **`db seed`**, **`db backup` / `restore`** (Postgres CLI tools) |
 | **Storage** | **Local / S3 / MinIO / Cloudflare R2** drivers, **signed URLs**, **image processing** (resize, crop, thumbnail), **Fiber middleware**, public + private disks |
 | **HTTP Client** | Fluent JSON client with **WithToken**, **WithHeader**, **WithTimeout**, `Get`/`Post`/`Put`, automatic JSON marshal/unmarshal, retry on 5xx, and fake test transport |
 | Ops | `/health`, `/ready`, `/status` |
@@ -385,13 +384,12 @@ Application data access uses **GORM** (`pkg/database`). Schema revisions are app
 | **PostgreSQL** | `postgres` (default when unset / empty) | Primary development target |
 | **MySQL** | `mysql` | |
 | **SQLite** | `sqlite` | Handy for local tools and tests |
-| **SQL Server** | `sqlserver` | URL must use the `sqlserver://` form expected by `go-mssqldb` |
 
 Set **`database_driver`** and **`database_url`** in YAML or environment variables. Examples live in **`config/examples/dev.yaml`**; validation and normalization are in **`pkg/config`**.
 
 ### Migration SQL layout
 
-Versioned **`*.up.sql`** / **`*.down.sql`** for each engine live under **[`pkg/migrations/sql/`](pkg/migrations/sql/)** (`postgres/`, `mysql/`, `sqlite/`, `sqlserver/`). With **`migrations_source: embed`** (default), the CLI uses the embedded tree for the configured driver. Use **`migrations_source: file`** and **`migrations_dir`** for on-disk migrations (typical for scaffolded apps), or **`--migrations <dir>`** on **`db migrate`** / **`db rollback`** / **`db tenants …`** to point at a folder for that run only.
+Versioned **`*.up.sql`** / **`*.down.sql`** for each engine live under **[`pkg/migrations/sql/`](pkg/migrations/sql/)** (`postgres/`, `mysql/`, `sqlite/`). With **`migrations_source: embed`** (default), the CLI uses the embedded tree for the configured driver. Use **`migrations_source: file`** and **`migrations_dir`** for on-disk migrations (typical for scaffolded apps), or **`--migrations <dir>`** on **`db migrate`** / **`db rollback`** / **`db tenants …`** to point at a folder for that run only.
 
 For **`migrations_source`**, seeds, and **`zatrano gen model`** paths, see **[Database migrations (SQL)](#database-migrations-sql)** under [Configuration](#configuration).
 
@@ -2034,7 +2032,7 @@ Use **`storage:link`** to symlink **`storage/app/public`** into **`public/storag
 
 Supported engines, **`database_driver`**, and **`database_url`** are described in **[Database](#database)**.
 
-- **`migrations_source`:** **`embed`** (default) — versioned `*.up.sql` / `*.down.sql` live under **`pkg/migrations/sql/<driver>/`** (`postgres`, `mysql`, `sqlite`, `sqlserver`). `zatrano db migrate` uses **golang-migrate** with an **`embed`/`iofs`** source and the same driver you set with **`database_driver`**.
+- **`migrations_source`:** **`embed`** (default) — versioned `*.up.sql` / `*.down.sql` live under **`pkg/migrations/sql/<driver>/`** (`postgres`, `mysql`, `sqlite`). `zatrano db migrate` uses **golang-migrate** with an **`embed`/`iofs`** source and the same driver you set with **`database_driver`**.
 - **`file`** — read migrations from **`migrations_dir`** on disk (typical for **`zatrano new`** / scaffolded apps, which set `migrations_source: file` and ship starter SQL under `migrations/`).
 - **`--migrations <dir>`** on **`db migrate`**, **`db rollback`**, or **`db tenants …`** forces **file** mode from that directory (ignores embed for that invocation).
 - **`zatrano gen model`** writes new **`.up.sql` / `.down.sql`** stubs under **`pkg/migrations/sql/postgres/`** only; copy or adapt for other drivers if you rely on **embed** for those engines.

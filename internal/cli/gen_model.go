@@ -12,7 +12,7 @@ import (
 var genModelCmd = &cobra.Command{
 	Use:   "model [name]",
 	Short: "Generate a standalone model and migration files",
-	Long: `Creates a model scaffold under pkg/repository/models/ and PostgreSQL migration stubs under pkg/migrations/sql/postgres/ (copy or adapt for mysql/sqlite/sqlserver when needed).
+	Long: `Creates a model scaffold under pkg/repository/models/ and PostgreSQL migration stubs under pkg/migrations/sql/postgres/ (copy or adapt for mysql/sqlite when needed).
 
 Example:
   zatrano gen model user`,

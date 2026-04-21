@@ -19,7 +19,7 @@ var dbMigrateCmd = &cobra.Command{
 	Use:   "migrate",
 	Short: "Apply SQL migrations (golang-migrate)",
 	Long: `Runs versioned *.up.sql migrations. By default (migrations_source: embed) SQL is read from the
-embedded driver-specific set in pkg/migrations (postgres, mysql, sqlite, sqlserver). Use migrations_source: file
+embedded driver-specific set in pkg/migrations (postgres, mysql, sqlite). Use migrations_source: file
 and migrations_dir for disk-based migrations, or pass --migrations to force a directory. Requires DATABASE_URL.`,
 	RunE: runDBMigrate,
 }

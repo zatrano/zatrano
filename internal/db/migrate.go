@@ -11,11 +11,9 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
-	"github.com/golang-migrate/migrate/v4/database/sqlserver"
 	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite3"
-	_ "github.com/golang-migrate/migrate/v4/database/sqlserver"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
@@ -202,8 +200,6 @@ func databaseDriverForMigrate(cfg *config.Config, db *sql.DB) (migratedb.Driver,
 		return mysql.WithInstance(db, &mysql.Config{})
 	case "sqlite":
 		return sqlite3.WithInstance(db, &sqlite3.Config{})
-	case "sqlserver":
-		return sqlserver.WithInstance(db, &sqlserver.Config{})
 	default:
 		return nil, fmt.Errorf("unsupported database_driver %q", cfg.DatabaseDriver)
 	}

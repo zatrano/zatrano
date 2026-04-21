@@ -25,7 +25,7 @@ http_read_timeout: 30s
 #   graceful_restart_pid_file: ""  # optional PID file for systemd ExecReload patterns
 
 # Leave empty for local UI-only work; set DATABASE_URL when your DB is up.
-# database_driver: postgres   # postgres | mysql | sqlserver | sqlite (default: postgres)
+# database_driver: postgres   # postgres | mysql | sqlite (default: postgres)
 database_url: ""
 database_required: false
 

@@ -9,7 +9,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/mattn/go-sqlite3"
-	_ "github.com/microsoft/go-mssqldb"
 )
 
 // OpenStdSQLForMigrate opens a *sql.DB for golang-migrate (WithInstance), matching cfg.DatabaseDriver.
@@ -33,8 +32,6 @@ func OpenStdSQLForMigrate(cfg *config.Config) (*sql.DB, error) {
 		return sql.Open("mysql", dsn)
 	case "sqlite":
 		return sql.Open("sqlite3", sqlitePathForGORM(u))
-	case "sqlserver":
-		return sql.Open("sqlserver", u)
 	default:
 		return nil, fmt.Errorf("unsupported database_driver %q", cfg.DatabaseDriver)
 	}
