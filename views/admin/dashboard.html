@@ -1,19 +1,36 @@
-{{extends "layouts/app"}}
+{{extends "layouts/admin"}}
 {{define "title"}}{{.Title}} — {{.AppName}}{{end}}
 
-{{define "nav"}}
-<a class="navbar-link" href="{{.AdminPrefix}}">Özet</a>
-<a class="navbar-link" href="{{.AdminPrefix}}/metrics">Metrikler</a>
-<a class="navbar-link" href="{{.AdminPrefix}}/logs">Günlükler</a>
-{{end}}
-
 {{define "content"}}
-<section class="admin-dashboard">
-  <h1>Yönetim paneli</h1>
-  <p class="text-muted">Kuyruk derinliği, başarısız işler ve günlük dosyası için aşağıdaki bağlantıları kullanın.</p>
-  <ul class="admin-links">
-    <li><a href="{{.AdminPrefix}}/metrics">Metrikler</a> — Redis kuyruğu, <code>zatrano_failed_jobs</code>, Redis keyspace isabet oranı</li>
-    <li><a href="{{.AdminPrefix}}/logs">Günlükler</a> — Zap / dosya kuyruğu, arama ve indirme</li>
-  </ul>
+<section class="admin-page admin-page--list" aria-labelledby="admin-dash-title">
+  <header class="admin-page__head">
+    <div>
+      <h1 class="admin-page__title" id="admin-dash-title">Yönetim paneli</h1>
+      <nav class="admin-breadcrumb" aria-label="Gezinti">
+        <a href="{{.AdminPrefix}}/">Ana sayfa</a>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        <span class="admin-breadcrumb__current">Özet</span>
+      </nav>
+    </div>
+  </header>
+
+  <div class="admin-card">
+    <div class="admin-card__header">
+      <h2 class="admin-card__title">Kısayollar</h2>
+    </div>
+    <div class="admin-card__body">
+      <p class="admin-metric-text text-secondary mb-3">Kuyruk derinliği, başarısız işler ve uygulama günlüğü için aşağıdakileri kullanın.</p>
+      <div class="admin-link-cards">
+        <a class="admin-link-card" href="{{.AdminPrefix}}/metrics">
+          <h2>Metrikler</h2>
+          <p>Redis kuyrukları, <code>zatrano_failed_jobs</code> ve Redis keyspace isabet oranı</p>
+        </a>
+        <a class="admin-link-card" href="{{.AdminPrefix}}/logs">
+          <h2>Günlükler</h2>
+          <p>Zap / dosya günlüğü, satır arama ve indirme</p>
+        </a>
+      </div>
+    </div>
+  </div>
 </section>
 {{end}}

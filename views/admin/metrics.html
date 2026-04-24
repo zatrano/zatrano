@@ -1,47 +1,78 @@
-{{extends "layouts/app"}}
+{{extends "layouts/admin"}}
 {{define "title"}}{{.Title}} — {{.AppName}}{{end}}
 
-{{define "nav"}}
-<a class="navbar-link" href="{{.AdminPrefix}}">Özet</a>
-<a class="navbar-link" href="{{.AdminPrefix}}/metrics">Metrikler</a>
-<a class="navbar-link" href="{{.AdminPrefix}}/logs">Günlükler</a>
-{{end}}
-
 {{define "content"}}
-<section class="admin-metrics">
-  <h1>Metrikler</h1>
+<section class="admin-page admin-page--list" aria-labelledby="admin-metrics-title">
+  <header class="admin-page__head">
+    <div>
+      <h1 class="admin-page__title" id="admin-metrics-title">Metrikler</h1>
+      <nav class="admin-breadcrumb" aria-label="Gezinti">
+        <a href="{{.AdminPrefix}}/">Ana sayfa</a>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        <span class="admin-breadcrumb__current">Metrikler</span>
+      </nav>
+    </div>
+  </header>
 
-  <h2>Kuyruk (Redis)</h2>
-  {{if .Metrics.Queues}}
-  <table class="data-table">
-    <thead><tr><th>Kuyruk</th><th>Hazır (LLEN)</th><th>Ertelenmiş (ZCARD)</th></tr></thead>
-    <tbody>
-      {{range .Metrics.Queues}}
-      <tr>
-        <td><code>{{.Name}}</code></td>
-        <td>{{.Ready}}</td>
-        <td>{{.Delayed}}</td>
-      </tr>
+  <div class="admin-card">
+    <div class="admin-card__header">
+      <h2 class="admin-card__title">Kuyruk (Redis)</h2>
+    </div>
+    {{if .Metrics.Queues}}
+    <div class="admin-card__body admin-card__body--flush">
+      <div class="admin-table-wrap">
+        <table class="admin-data-table" role="table">
+          <thead>
+            <tr>
+              <th scope="col">Kuyruk</th>
+              <th scope="col">Hazır (LLEN)</th>
+              <th scope="col">Ertelenmiş (ZCARD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .Metrics.Queues}}
+            <tr>
+              <td><code>{{.Name}}</code></td>
+              <td>{{.Ready}}</td>
+              <td>{{.Delayed}}</td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {{else}}
+    <div class="admin-card__body">
+      <p class="admin-metric-text text-secondary mb-0">Redis bağlı değil veya kuyruk listesi boş.</p>
+    </div>
+    {{end}}
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card__header">
+      <h2 class="admin-card__title">Başarısız işler</h2>
+    </div>
+    <div class="admin-card__body">
+      {{if .Metrics.FailedJobsOK}}
+      <p class="admin-metric-text mb-0"><strong>{{.Metrics.FailedJobs}}</strong> kayıt (<code>zatrano_failed_jobs</code>)</p>
+      {{else}}
+      <p class="admin-metric-text text-secondary mb-0">Veritabanından okunamadı (tablo yok veya DB kapalı).</p>
       {{end}}
-    </tbody>
-  </table>
-  {{else}}
-  <p class="text-muted">Redis bağlı değil veya kuyruk listesi boş.</p>
-  {{end}}
+    </div>
+  </div>
 
-  <h2>Başarısız işler</h2>
-  {{if .Metrics.FailedJobsOK}}
-  <p><strong>{{.Metrics.FailedJobs}}</strong> kayıt (<code>zatrano_failed_jobs</code>)</p>
-  {{else}}
-  <p class="text-muted">Veritabanından okunamadı (tablo yok veya DB kapalı).</p>
-  {{end}}
-
-  <h2>Önbellek isabeti (Redis keyspace)</h2>
-  {{if .Metrics.RedisInfoOK}}
-  <p>Hits: <strong>{{.Metrics.RedisHits}}</strong> · Misses: <strong>{{.Metrics.RedisMisses}}</strong></p>
-  <p>İsabet oranı: <strong>{{.Metrics.CacheHitRate}}</strong></p>
-  {{else}}
-  <p class="text-muted">Redis <code>INFO stats</code> okunamadı.</p>
-  {{end}}
+  <div class="admin-card">
+    <div class="admin-card__header">
+      <h2 class="admin-card__title">Önbellek isabeti (Redis keyspace)</h2>
+    </div>
+    <div class="admin-card__body">
+      {{if .Metrics.RedisInfoOK}}
+      <p class="admin-metric-text">Hits: <strong>{{.Metrics.RedisHits}}</strong> · Misses: <strong>{{.Metrics.RedisMisses}}</strong></p>
+      <p class="admin-metric-text mb-0">İsabet oranı: <strong>{{.Metrics.CacheHitRate}}</strong></p>
+      {{else}}
+      <p class="admin-metric-text text-secondary mb-0">Redis <code>INFO stats</code> okunamadı.</p>
+      {{end}}
+    </div>
+  </div>
 </section>
 {{end}}

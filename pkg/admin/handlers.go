@@ -3,6 +3,7 @@ package admin
 import (
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -20,7 +21,27 @@ func adminURLPrefix(cfg *config.Config) string {
 	return p
 }
 
-func renderPage(a *core.App, c fiber.Ctx, view string, extra fiber.Map) error {
+func adminInitials(appName string) string {
+	s := strings.TrimSpace(appName)
+	if s == "" {
+		return "ZA"
+	}
+	s = strings.ToUpper(s)
+	r, w := utf8.DecodeRuneInString(s)
+	if w == 0 {
+		return "ZA"
+	}
+	if len(s) <= w {
+		return string(r)
+	}
+	r2, _ := utf8.DecodeRuneInString(s[w:])
+	if r2 == utf8.RuneError {
+		return string(r)
+	}
+	return string(r) + string(r2)
+}
+
+func renderAdmin(a *core.App, c fiber.Ctx, view string, extra fiber.Map) error {
 	if a.View == nil {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
 			"error": "admin HTML için view yapılandırması gerekir (view.*)",
@@ -28,14 +49,17 @@ func renderPage(a *core.App, c fiber.Ctx, view string, extra fiber.Map) error {
 	}
 	data := a.View.ViewData(c, extra)
 	data["AppName"] = a.Config.AppName
+	data["AdminInitials"] = adminInitials(a.Config.AppName)
+	data["AdminSubtitle"] = "Operasyon paneli"
 	return c.Render(view, data)
 }
 
 func handleDashboard(a *core.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		return renderPage(a, c, "admin/dashboard", fiber.Map{
+		return renderAdmin(a, c, "admin/dashboard", fiber.Map{
 			"Title":       "Yönetim",
 			"AdminPrefix": adminURLPrefix(a.Config),
+			"AdminNav":    "dashboard",
 		})
 	}
 }
@@ -43,9 +67,10 @@ func handleDashboard(a *core.App) fiber.Handler {
 func handleMetrics(a *core.App) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		snap := collectMetrics(c.Context(), a)
-		return renderPage(a, c, "admin/metrics", fiber.Map{
+		return renderAdmin(a, c, "admin/metrics", fiber.Map{
 			"Title":       "Metrikler",
 			"AdminPrefix": adminURLPrefix(a.Config),
+			"AdminNav":    "metrics",
 			"Metrics":     snap,
 		})
 	}
@@ -67,14 +92,15 @@ func handleLogs(a *core.App) fiber.Handler {
 				lines = filterLogLines(raw, q)
 			}
 		}
-		return renderPage(a, c, "admin/logs", fiber.Map{
+		return renderAdmin(a, c, "admin/logs", fiber.Map{
 			"Title":       "Günlükler",
 			"AdminPrefix": adminURLPrefix(a.Config),
+			"AdminNav":    "logs",
 			"LogPath":     path,
-			"LogQuery":   q,
-			"LogLines":   lines,
-			"LogError":   errMsg,
-			"LogLineCap": logTailMax,
+			"LogQuery":    q,
+			"LogLines":    lines,
+			"LogError":    errMsg,
+			"LogLineCap":  logTailMax,
 		})
 	}
 }

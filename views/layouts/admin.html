@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{block "title" .}}{{if .Title}}{{.Title}} — {{end}}{{.AppName}}{{end}}</title>
+  <meta name="csrf-token" content="{{.CSRF}}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  {{assetLink "css/admin-panel.css"}}
+  {{block "styles" .}}{{end}}
+</head>
+<body class="admin-layout-body">
+
+  <div class="sidebar-overlay" id="adminSidebarOverlay"></div>
+
+  <aside class="sidebar" id="adminSidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo" aria-hidden="true">
+        <i class="bi bi-grid-3x3-gap-fill"></i>
+      </div>
+      <div class="sidebar-brand">
+        <span class="sidebar-title">{{if .AppName}}{{.AppName}}{{else}}ZATRANO{{end}}</span>
+        <span class="sidebar-subtitle">{{if .AdminSubtitle}}{{.AdminSubtitle}}{{else}}Yönetim paneli{{end}}</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-menu" aria-label="Yönetim menüsü">
+      <div class="menu-label">Yönetim</div>
+      <a href="{{.AdminPrefix}}/" class="menu-item{{if eq .AdminNav "dashboard"}} active{{end}}">
+        <i class="bi bi-house-door" aria-hidden="true"></i>
+        <span>Özet</span>
+      </a>
+      <a href="{{.AdminPrefix}}/metrics" class="menu-item{{if eq .AdminNav "metrics"}} active{{end}}">
+        <i class="bi bi-graph-up-arrow" aria-hidden="true"></i>
+        <span>Metrikler</span>
+      </a>
+      <a href="{{.AdminPrefix}}/logs" class="menu-item{{if eq .AdminNav "logs"}} active{{end}}">
+        <i class="bi bi-journal-text" aria-hidden="true"></i>
+        <span>Günlükler</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="profile-card">
+        <div class="profile-avatar" aria-hidden="true">{{.AdminInitials}}</div>
+        <div class="profile-info">
+          <div class="profile-name">{{if .AppName}}{{.AppName}}{{else}}ZATRANO{{end}}</div>
+          <div class="profile-role">Korumalı uç nokta</div>
+        </div>
+        <div class="profile-status" title="Aktif"></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    <header class="header">
+      <button type="button" class="header-toggle" id="adminSidebarToggle" aria-label="Menüyü aç/kapat">
+        <i class="bi bi-list" aria-hidden="true"></i>
+      </button>
+
+      <div class="header-actions">
+        <button type="button" class="header-action-btn d-none d-sm-flex" id="adminFullscreenBtn" aria-label="Tam ekran">
+          <i class="bi bi-arrows-fullscreen" aria-hidden="true"></i>
+        </button>
+        <div class="dropdown">
+          <button class="header-action-btn" type="button" id="adminNotificationBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Bildirimler">
+            <i class="bi bi-bell" aria-hidden="true"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="adminNotificationBtn">
+            <div class="notification-header">
+              <span class="notification-title">Bildirimler</span>
+            </div>
+            <div class="notification-body p-3 text-center text-secondary small">Bu panel yalnızca operasyon; uygulama bildirimleri burada yok.</div>
+          </div>
+        </div>
+
+        <div class="header-divider d-none d-md-block"></div>
+
+        <div class="header-user d-none d-md-flex" aria-hidden="true">
+          <div class="header-user-avatar">{{.AdminInitials}}</div>
+          <div class="header-user-info">
+            <span class="header-user-name">{{if .AppName}}{{.AppName}}{{else}}ZATRANO{{end}}</span>
+            <span class="header-user-role">Yönetici</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content" id="main-content">
+      {{template "partials/flash-messages" .}}
+      {{block "content" .}}{{end}}
+    </main>
+
+    <footer class="footer">
+      <span>&copy; 2026 {{if .AppName}}{{.AppName}}{{else}}ZATRANO{{end}} · Zatrano yönetim</span>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {{assetScript "js/admin-panel.js"}}
+  <script>window.__CSRF__ = "{{.CSRF}}";</script>
+  {{block "scripts" .}}{{end}}
+</body>
+</html>
