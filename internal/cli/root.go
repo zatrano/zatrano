@@ -20,7 +20,7 @@ Stack: Fiber v3, PostgreSQL, Redis, GORM.
 
 Typical flow: copy config/examples → zatrano config validate → zatrano doctor → zatrano serve.
 CI: zatrano config validate -q && zatrano openapi validate --merged && zatrano verify`,
-	Version: meta.Version,
+	Version: meta.ReportedVersion(),
 	Example: `  zatrano serve
   zatrano config validate
   zatrano doctor

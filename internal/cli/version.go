@@ -12,6 +12,6 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print ZATRANO CLI version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(meta.Version)
+		fmt.Println(meta.ReportedVersion())
 	},
 }

@@ -38,7 +38,7 @@ func runDoctor(cmd *cobra.Command, _ []string) error {
 	noDotenv, _ := cmd.Flags().GetBool("no-dotenv")
 
 	fmt.Printf("ZATRANO doctor\n")
-	fmt.Printf("  cli version:     %s\n", meta.Version)
+	fmt.Printf("  cli version:     %s\n", meta.ReportedVersion())
 	fmt.Printf("  go version:      %s\n", runtime.Version())
 	fmt.Printf("  os/arch:         %s/%s\n", runtime.GOOS, runtime.GOARCH)
 	fmt.Printf("  working dir:     %s\n", mustWd())
