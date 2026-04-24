@@ -396,23 +396,25 @@ Sürücü başına sürümlü **`*.up.sql`** / **`*.down.sql`** dosyaları **[`p
 
 ## Kurulum
 
-CLI’yı `go install` ile kurun.
+CLI’yı genelde herkesin kullandığı gibi `latest` ile kurun:
 
-**Her zaman `main` dalındaki en güncel commit (önerilen “en son sürüm” anlamında):**
+```bash
+go install github.com/zatrano/zatrano/cmd/zatrano@latest
+```
+
+`@latest`, proxy’nin gördüğü en yüksek `v*.*.*` sürüm etiketine çözülür (bkz. [Releases](https://github.com/zatrano/zatrano/releases)). Belirli bir sürüme kilitlemek için:
+
+```bash
+go install github.com/zatrano/zatrano/cmd/zatrano@v0.0.1
+```
+
+Yeni etiket henüz yokken veya doğrudan `main` ucu gerekirse:
 
 ```bash
 go install github.com/zatrano/zatrano/cmd/zatrano@main
 ```
 
-**Etiketli sürümler:** `go` modüllerinde `@latest`, yayınlanmış **en yüksek** `v*.*.*` etiketine gider. Depoda yeni commit olsa da etiket yoksa veya proxy eski sürümü tutuyorsa `latest` beklentiyle aynı olmayabilir; bu yüzden “her zaman taze `main`” için yukarıdaki `@main` satırı kullanılır.
-
-```bash
-go install github.com/zatrano/zatrano/cmd/zatrano@latest
-# veya sabit sürüm:
-# go install github.com/zatrano/zatrano/cmd/zatrano@v0.0.1
-```
-
-Eski sürüm takılıyorsa: `GOPROXY=direct` ile doğrudan kaynaktan alın veya `go clean -modcache` sonrası tekrar kurun.
+Eski sürüm takılıyorsa: `GOPROXY=direct` veya `go clean -modcache` ardından tekrar `go install`.
 
 ### Değişiklik günlüğü ve sürümler
 

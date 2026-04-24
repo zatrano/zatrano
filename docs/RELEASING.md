@@ -57,8 +57,12 @@ This uses conventional commits **since the last `v*.*.*` tag** and `cliff.toml` 
 
 ## `go install` and tags
 
-- **`go install ...@vX.Y.Z`**: exact release.
-- **`go install ...@main`:** tip of the default branch.
-- **`go install ...@latest`:** highest **semver tag** the proxy has indexed (not every untagged commit). Tag releases to keep `latest` meaningful.
+Most Zatrano users run:
+
+- **`go install ...@latest`** — highest **published** `v*.*.*` tag the module proxy has (what people expect for “latest”).
+- **`go install ...@vX.Y.Z`** — exact, reproducible version.
+- **`go install ...@main`:** tip of the default branch; use if you need a commit **before** the next tag, or for local development.
+
+Tag releases (see [Automation summary](#automation-summary)) so `@latest` always tracks real releases. If the proxy lags, use `GOPROXY=direct` or `go clean -modcache` before reinstalling.
 
 See also [README.md](../README.md#installation).
