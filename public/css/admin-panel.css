@@ -734,7 +734,7 @@ body {
     }
 }
 
-/* Zatrano admin içerik alanı */
+/* Zatrano admin content area */
 .admin-page-title {
     font-size: 1.5rem;
     font-weight: 600;
@@ -926,7 +926,7 @@ body {
     color: #1e40af;
 }
 
-/* Masaüstü şablon: user-list (liste) + user-add (form) sayfa iskeleti */
+/* Desktop template: user-list (list) + user-add (form) page layout */
 .content .admin-page--list,
 .content .admin-page--form,
 .content .admin-page--dashboard {
@@ -980,7 +980,7 @@ body {
     color: var(--text-secondary);
 }
 
-/* Kartlar (user-list / user-add) */
+/* Cards (user-list / user-add) */
 .content .admin-card {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -1025,7 +1025,7 @@ body {
     border-top: 1px solid var(--border-color);
 }
 
-/* Liste: tablo (user-list) */
+/* List: table (user-list) */
 .content .admin-table-wrap {
     overflow-x: auto;
 }
@@ -1064,7 +1064,7 @@ body {
     border-bottom: none;
 }
 
-/* Filtre satırı (user-list) + form üst bölümü (user-add benzeri) */
+/* Filter row (user-list) + form top area (user-add style) */
 .content .admin-filter-bar {
     display: flex;
     flex-wrap: wrap;
@@ -1101,7 +1101,7 @@ body {
     font-size: 14px;
 }
 
-/* Form sayfası (user-add) — tek sütun ve aksiyonlar */
+/* Form page (user-add) — single column and actions */
 .content .admin-form-block {
     display: block;
 }
@@ -1168,7 +1168,7 @@ body {
     text-decoration: underline;
 }
 
-/* Metin blokları (tablo dışı metrik) */
+/* Text blocks (non-table metrics) */
 .content .admin-metric-text {
     font-size: 14px;
     line-height: 1.6;

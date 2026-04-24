@@ -20,7 +20,7 @@ type Options struct {
 type fileT struct {
 	rel  string
 	tmpl string
-	// raw: Zatrano view sözdizimi (html/template) içerir; text/template.Parse ile işlenmez, byte olarak yazılır.
+	// raw: when true, write the file as-is; Zatrano view syntax is not run through text/template.Parse.
 	raw bool
 }
 
@@ -63,7 +63,7 @@ func Run(opts Options) error {
 		{filepath.Join("migrations", "000001_init.up.sql"), tplMigrationUp, false},
 		{filepath.Join("migrations", "000001_init.down.sql"), tplMigrationDown, false},
 		{filepath.Join("db", "seeds", ".gitkeep"), "", false},
-		// View / template system (Zatrano sözdizimi — text/template’ten ayrı, ham yazılır)
+		// View / template system (raw writes; not parsed as scaffold text/template)
 		{filepath.Join("views", "layouts", "app.html"), tplViewLayoutApp, true},
 		{filepath.Join("views", "layouts", "auth.html"), tplViewLayoutAuth, true},
 		{filepath.Join("views", "components", "alert.html"), tplViewComponentAlert, true},
