@@ -396,11 +396,23 @@ Sürücü başına sürümlü **`*.up.sql`** / **`*.down.sql`** dosyaları **[`p
 
 ## Kurulum
 
-CLI aracını genel GOPATH / modül önbelleği üzerinden kurun:
+CLI’yı `go install` ile kurun.
+
+**Her zaman `main` dalındaki en güncel commit (önerilen “en son sürüm” anlamında):**
+
+```bash
+go install github.com/zatrano/zatrano/cmd/zatrano@main
+```
+
+**Etiketli sürümler:** `go` modüllerinde `@latest`, yayınlanmış **en yüksek** `v*.*.*` etiketine gider. Depoda yeni commit olsa da etiket yoksa veya proxy eski sürümü tutuyorsa `latest` beklentiyle aynı olmayabilir; bu yüzden “her zaman taze `main`” için yukarıdaki `@main` satırı kullanılır.
 
 ```bash
 go install github.com/zatrano/zatrano/cmd/zatrano@latest
+# veya sabit sürüm:
+# go install github.com/zatrano/zatrano/cmd/zatrano@v0.0.1
 ```
+
+Eski sürüm takılıyorsa: `GOPROXY=direct` ile doğrudan kaynaktan alın veya `go clean -modcache` sonrası tekrar kurun.
 
 ---
 

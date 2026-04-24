@@ -397,11 +397,23 @@ For **`migrations_source`**, seeds, and **`zatrano gen model`** paths, see **[Da
 
 ## Installation
 
-Install the CLI globally:
+Install the CLI globally.
+
+**To always build from the current default branch (recommended for the newest `main` tip):**
+
+```bash
+go install github.com/zatrano/zatrano/cmd/zatrano@main
+```
+
+**To install a released version (semver tag):** `go install` picks the **highest** `v*.*.*` tag as `@latest` once that tag is published (not “every new commit on `main`” unless you tag it).
 
 ```bash
 go install github.com/zatrano/zatrano/cmd/zatrano@latest
+# or pin explicitly, e.g.:
+# go install github.com/zatrano/zatrano/cmd/zatrano@v0.0.1
 ```
+
+If a proxy still serves a stale build, use `GOPROXY=direct` (fetch from the module host directly) or `go clean -modcache` before reinstalling.
 
 ---
 

@@ -64,7 +64,7 @@ func runNew(cmd *cobra.Command, args []string) error {
 	fmt.Println("  cd", filepath.Base(out))
 	fmt.Println("  cp config/examples/dev.yaml config/dev.yaml")
 	if rep == "" {
-		fmt.Println("  go get github.com/zatrano/zatrano@latest   # or add replace-zatrano when hacking locally")
+		fmt.Println("  go get github.com/zatrano/zatrano@main   # or @v0.0.1+ when tagged; add replace-zatrano when hacking locally")
 	}
 	fmt.Println("  go mod tidy")
 	fmt.Println("  go run ./cmd/" + name)
