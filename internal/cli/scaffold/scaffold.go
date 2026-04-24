@@ -20,6 +20,8 @@ type Options struct {
 type fileT struct {
 	rel  string
 	tmpl string
+	// raw: Zatrano view sözdizimi (html/template) içerir; text/template.Parse ile işlenmez, byte olarak yazılır.
+	raw bool
 }
 
 // Run writes the starter layout to Dir.
@@ -51,32 +53,32 @@ func Run(opts Options) error {
 	}
 
 	files := []fileT{
-		{filepath.Join("go.mod"), tplGoMod},
-		{filepath.Join("internal", "routes", "register.go"), tplRoutesRegister},
-		{filepath.Join("cmd", opts.AppName, "main.go"), tplMain},
-		{filepath.Join("config", "examples", "dev.yaml"), tplDevYAML},
-		{filepath.Join("locales", "en.json"), tplLocalesEn},
-		{filepath.Join("locales", "tr.json"), tplLocalesTr},
-		{filepath.Join("api", "openapi.yaml"), tplOpenAPI},
-		{filepath.Join("migrations", "000001_init.up.sql"), tplMigrationUp},
-		{filepath.Join("migrations", "000001_init.down.sql"), tplMigrationDown},
-		{filepath.Join("db", "seeds", ".gitkeep"), ""},
-		// View / template system
-		{filepath.Join("views", "layouts", "app.html"), tplViewLayoutApp},
-		{filepath.Join("views", "layouts", "auth.html"), tplViewLayoutAuth},
-		{filepath.Join("views", "components", "alert.html"), tplViewComponentAlert},
-		{filepath.Join("views", "components", "button.html"), tplViewComponentButton},
-		{filepath.Join("views", "components", "form-input.html"), tplViewComponentFormInput},
-		{filepath.Join("views", "components", "form-select.html"), tplViewComponentFormSelect},
-		{filepath.Join("views", "components", "form-textarea.html"), tplViewComponentFormTextarea},
-		{filepath.Join("views", "components", "csrf.html"), tplViewComponentCSRF},
-		{filepath.Join("views", "components", "pagination.html"), tplViewComponentPagination},
-		{filepath.Join("views", "partials", "flash-messages.html"), tplViewPartialFlash},
-		{filepath.Join("views", "home", "index.html"), tplViewHomeIndex},
+		{filepath.Join("go.mod"), tplGoMod, false},
+		{filepath.Join("internal", "routes", "register.go"), tplRoutesRegister, false},
+		{filepath.Join("cmd", opts.AppName, "main.go"), tplMain, false},
+		{filepath.Join("config", "examples", "dev.yaml"), tplDevYAML, false},
+		{filepath.Join("locales", "en.json"), tplLocalesEn, false},
+		{filepath.Join("locales", "tr.json"), tplLocalesTr, false},
+		{filepath.Join("api", "openapi.yaml"), tplOpenAPI, false},
+		{filepath.Join("migrations", "000001_init.up.sql"), tplMigrationUp, false},
+		{filepath.Join("migrations", "000001_init.down.sql"), tplMigrationDown, false},
+		{filepath.Join("db", "seeds", ".gitkeep"), "", false},
+		// View / template system (Zatrano sözdizimi — text/template’ten ayrı, ham yazılır)
+		{filepath.Join("views", "layouts", "app.html"), tplViewLayoutApp, true},
+		{filepath.Join("views", "layouts", "auth.html"), tplViewLayoutAuth, true},
+		{filepath.Join("views", "components", "alert.html"), tplViewComponentAlert, true},
+		{filepath.Join("views", "components", "button.html"), tplViewComponentButton, true},
+		{filepath.Join("views", "components", "form-input.html"), tplViewComponentFormInput, true},
+		{filepath.Join("views", "components", "form-select.html"), tplViewComponentFormSelect, true},
+		{filepath.Join("views", "components", "form-textarea.html"), tplViewComponentFormTextarea, true},
+		{filepath.Join("views", "components", "csrf.html"), tplViewComponentCSRF, true},
+		{filepath.Join("views", "components", "pagination.html"), tplViewComponentPagination, true},
+		{filepath.Join("views", "partials", "flash-messages.html"), tplViewPartialFlash, true},
+		{filepath.Join("views", "home", "index.html"), tplViewHomeIndex, true},
 		// Static asset placeholders
-		{filepath.Join("public", "css", ".gitkeep"), ""},
-		{filepath.Join("public", "js", ".gitkeep"), ""},
-		{"README.md", tplReadme},
+		{filepath.Join("public", "css", ".gitkeep"), "", false},
+		{filepath.Join("public", "js", ".gitkeep"), "", false},
+		{"README.md", tplReadme, false},
 	}
 
 	for _, f := range files {
@@ -86,6 +88,12 @@ func Run(opts Options) error {
 		}
 		if f.tmpl == "" {
 			if err := os.WriteFile(out, []byte{}, 0o644); err != nil {
+				return err
+			}
+			continue
+		}
+		if f.raw {
+			if err := os.WriteFile(out, []byte(f.tmpl), 0o644); err != nil {
 				return err
 			}
 			continue
