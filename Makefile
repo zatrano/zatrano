@@ -1,7 +1,11 @@
 # ZATRANO — optional Makefile for POSIX shells (Git Bash, macOS, Linux).
 # On Windows PowerShell, use: go run ./cmd/zatrano serve
 
-.PHONY: build test fmt vet lint run doctor air gen-example openapi-export verify verify-race config-validate
+# Changelog: install git-cliff — https://github.com/orhun/git-cliff#installation
+#   (e.g. cargo install git-cliff, WinGet, or GitHub release binary)
+
+.PHONY: build test fmt vet lint run doctor air gen-example openapi-export verify verify-race config-validate \
+	changelog next-version
 APP := ./cmd/zatrano
 
 build:
@@ -44,3 +48,13 @@ verify:
 
 verify-race:
 	go run $(APP) verify --race
+
+# Regenerate CHANGELOG.md (Conventional Commits; requires git-cliff on PATH, full `git` history)
+changelog:
+	@command -v git-cliff >/dev/null 2>&1 || { echo "install git-cliff: https://github.com/orhun/git-cliff#installation"; exit 1; }
+	git-cliff -c cliff.toml -o CHANGELOG.md
+
+# Print next semver from commits since the last v* tag (no file changes)
+next-version:
+	@command -v git-cliff >/dev/null 2>&1 || { echo "install git-cliff: https://github.com/orhun/git-cliff#installation"; exit 1; }
+	@git-cliff --bumped-version

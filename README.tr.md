@@ -414,6 +414,11 @@ go install github.com/zatrano/zatrano/cmd/zatrano@latest
 
 Eski sürüm takılıyorsa: `GOPROXY=direct` ile doğrudan kaynaktan alın veya `go clean -modcache` sonrası tekrar kurun.
 
+### Değişiklik günlüğü ve sürümler
+
+- **[CHANGELOG.md](CHANGELOG.md)** — sürüm notları ( [git-cliff](https://github.com/orhun/git-cliff) + [Conventional Commits](https://www.conventionalcommits.org/); yerelde `make changelog`).
+- **Etiketleme ve otomasyon** — [docs/RELEASING.md](docs/RELEASING.md) ( `v*.*.*` etiketi, CHANGELOG PR ve [GitHub Releases](https://github.com/zatrano/zatrano/releases) iş akışları).
+
 ---
 
 ## Hızlı başlangıç

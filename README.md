@@ -415,6 +415,11 @@ go install github.com/zatrano/zatrano/cmd/zatrano@latest
 
 If a proxy still serves a stale build, use `GOPROXY=direct` (fetch from the module host directly) or `go clean -modcache` before reinstalling.
 
+### Changelog & releases
+
+- **[CHANGELOG.md](CHANGELOG.md)** — history (generated with [git-cliff](https://github.com/orhun/git-cliff) from [Conventional Commits](https://www.conventionalcommits.org/); run `make changelog` locally).
+- **Releases & semver** — [docs/RELEASING.md](docs/RELEASING.md) (tag `v*.*.*`, GitHub Actions for changelog PRs and [GitHub Releases](https://github.com/zatrano/zatrano/releases)).
+
 ---
 
 ## Quick start
