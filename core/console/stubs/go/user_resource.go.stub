@@ -1,0 +1,17 @@
+package resources
+
+import "github.com/zatrano/framework/app/models"
+
+// User transforms a user model for API output.
+// Created by make:auth; use with core/resources:
+//
+//	resources.JSON(user, User)
+func User(user models.User) map[string]any {
+	return map[string]any{
+		"id":         user.ID,
+		"name":       user.Name,
+		"email":      user.Email,
+		"created_at": user.CreatedAt,
+		"updated_at": user.UpdatedAt,
+	}
+}

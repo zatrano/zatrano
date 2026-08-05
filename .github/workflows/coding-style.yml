@@ -1,0 +1,54 @@
+name: coding style
+
+on:
+  push:
+    branches:
+      - main
+      - '*.x'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gofmt:
+    runs-on: ubuntu-24.04
+    name: gofmt
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: true
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "The following files are not gofmt'd:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+  mod-tidy:
+    runs-on: ubuntu-24.04
+    name: go mod tidy
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: true
+
+      - name: Check go.mod / go.sum
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum

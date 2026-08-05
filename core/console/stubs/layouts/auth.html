@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="{{ $locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@yield('title', 'Account') — {{ $appName }}</title>
+    <style>
+        :root {
+            --bg: #071018;
+            --panel: #0e1826;
+            --text: #e8eefc;
+            --muted: #8fa3c2;
+            --accent: #3dd6c6;
+            --line: rgba(255,255,255,0.10);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+            color: var(--text);
+            background:
+                radial-gradient(ellipse 80% 50% at 50% -10%, rgba(61, 214, 198, 0.22), transparent 55%),
+                linear-gradient(180deg, #0a141f 0%, var(--bg) 45%, #050b12 100%);
+        }
+        .auth-shell {
+            width: min(460px, 94vw);
+            margin: 0 auto;
+            padding: 3.5rem 0 3rem;
+        }
+        .auth-brand {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--accent);
+            font-size: 0.85rem;
+            margin-bottom: 1.75rem;
+            font-weight: 700;
+        }
+        .auth-panel {
+            padding: 2rem 1.75rem 2.25rem;
+            border: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent 40%), var(--panel);
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+        }
+        .auth-panel h1 { font-size: 1.65rem; }
+        .auth-panel label { color: var(--muted); }
+        .auth-panel a { color: var(--accent); }
+        .auth-footer {
+            margin-top: 1.35rem;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+    </style>
+    @yield('head')
+    @stack('styles')
+</head>
+<body>
+<div class="auth-shell">
+    <a class="auth-brand" href="/">{{ $appName }}</a>
+    <div class="auth-panel">
+        @yield('content')
+    </div>
+    <div class="auth-footer">@lang('messages.built_with')</div>
+</div>
+@stack('scripts')
+</body>
+</html>

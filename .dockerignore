@@ -1,0 +1,14 @@
+.git
+.gitignore
+.tmp
+*.exe
+*.test
+storage/logs/*
+storage/framework/sessions/*
+storage/framework/cache/*
+storage/framework/schedule/*
+database/*.sqlite
+node_modules
+.idea
+.vscode
+agent-transcripts

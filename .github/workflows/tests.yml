@@ -1,0 +1,124 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+      - '*.x'
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  linux_tests:
+    runs-on: ubuntu-24.04
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: zatrano
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+      redis:
+        image: redis:7.0
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.25.x']
+
+    name: Go ${{ matrix.go }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Copy environment file
+        run: cp .env.example .env
+
+      - name: Generate application key
+        run: go run ./cmd/zatrano key:generate
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Execute tests
+        run: go test ./...
+        env:
+          APP_ENV: testing
+          APP_DEBUG: 'true'
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+          CACHE_STORE: file
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: file
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+
+  windows_tests:
+    runs-on: windows-2022
+
+    strategy:
+      fail-fast: true
+      matrix:
+        go: ['1.25.x']
+
+    name: Go ${{ matrix.go }} - Windows
+
+    steps:
+      - name: Set git to use LF
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Copy environment file
+        run: copy .env.example .env
+
+      - name: Generate application key
+        run: go run ./cmd/zatrano key:generate
+
+      - name: Download modules
+        run: go mod download
+
+      - name: Execute tests
+        run: go test ./...
+        env:
+          APP_ENV: testing
+          APP_DEBUG: 'true'
+          DB_CONNECTION: sqlite
+          DB_DATABASE: database/database.sqlite
+          CACHE_STORE: file
+          QUEUE_CONNECTION: sync
+          SESSION_DRIVER: file
