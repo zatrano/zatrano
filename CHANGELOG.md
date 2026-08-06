@@ -2,6 +2,13 @@
 
 All notable changes to ZATRANO are documented in this file.
 
+## 0.1.2 - 2026-08-06
+
+### Added
+
+- Fenced code blocks (` ```lang `) in `core/markdown`
+- GFM-style pipe tables in `core/markdown`
+
 ## 0.1.1 - 2026-08-06
 
 ### Added

@@ -19,3 +19,16 @@ func TestMarkdownToHTML(t *testing.T) {
 		t.Fatalf("missing link: %s", html)
 	}
 }
+
+func TestMarkdownFencedCodeAndTable(t *testing.T) {
+	html := markdown.ToHTML("```go\nfmt.Println(\"hi\")\n```\n\n| Key | Purpose |\n|-----|---------|\n| `app.name` | Name |")
+	if !strings.Contains(html, `<pre><code class="language-go">`) {
+		t.Fatalf("missing fenced code: %s", html)
+	}
+	if !strings.Contains(html, "fmt.Println") {
+		t.Fatalf("missing code body: %s", html)
+	}
+	if !strings.Contains(html, "<table>") || !strings.Contains(html, "<th>Key</th>") {
+		t.Fatalf("missing table: %s", html)
+	}
+}
