@@ -2,6 +2,12 @@
 
 All notable changes to ZATRANO are documented in this file.
 
+## 0.1.5 - 2026-08-06
+
+### Fixed
+
+- `serve` now loads `.env` before resolving `APP_PORT` (was always defaulting to `8080`)
+
 ## 0.1.4 - 2026-08-06
 
 ### Added

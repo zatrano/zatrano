@@ -10,7 +10,6 @@ import (
 	"text/tabwriter"
 
 	"github.com/zatrano/framework/core"
-	"github.com/zatrano/framework/core/env"
 )
 
 // Application is the console kernel.
@@ -121,11 +120,9 @@ type ServeCommand struct {
 func (c *ServeCommand) Name() string        { return "serve" }
 func (c *ServeCommand) Description() string { return "Serve the application on the HTTP server" }
 func (c *ServeCommand) Handle(args []string) error {
-	port := strings.TrimSpace(env.Get("APP_PORT", "8080"))
-	if port == "" {
-		port = "8080"
-	}
-	addr := ":" + port
+	// Leave addr empty unless overridden so Application.Run can load .env
+	// first and then resolve APP_PORT (default 8080).
+	addr := ""
 	for i := 0; i < len(args); i++ {
 		if (args[i] == "--port" || args[i] == "-p") && i+1 < len(args) {
 			addr = ":" + args[i+1]
