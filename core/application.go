@@ -534,7 +534,11 @@ func (app *Application) Run(addr string) error {
 		}
 	}
 	if addr == "" {
-		addr = ":8080"
+		port := strings.TrimSpace(env.Get("APP_PORT", "8080"))
+		if port == "" {
+			port = "8080"
+		}
+		addr = ":" + port
 	}
 
 	server := &stdhttp.Server{

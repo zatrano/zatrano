@@ -2,6 +2,12 @@
 
 All notable changes to ZATRANO are documented in this file.
 
+## 0.1.4 - 2026-08-06
+
+### Added
+
+- Configurable HTTP listen port via `APP_PORT` (config, `serve`, and `Application.Run`)
+
 ## 0.1.3 - 2026-08-06
 
 ### Fixed

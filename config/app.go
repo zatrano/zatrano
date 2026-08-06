@@ -9,6 +9,7 @@ func App() map[string]any {
 		"env":      env.Get("APP_ENV", "local"),
 		"debug":    env.GetBool("APP_DEBUG", true),
 		"url":      env.Get("APP_URL", "http://localhost:8080"),
+		"port":     env.Get("APP_PORT", "8080"),
 		"key":      env.Get("APP_KEY"),
 		"locale":   env.Get("APP_LOCALE", "en"),
 		"fallback": env.Get("APP_FALLBACK_LOCALE", "en"),
