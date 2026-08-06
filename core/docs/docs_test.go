@@ -1,10 +1,10 @@
 package docs_test
 
 import (
+	stdhttp "net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	stdhttp "net/http"
 	"testing"
 
 	"github.com/zatrano/framework/core/docs"
