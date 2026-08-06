@@ -2,6 +2,14 @@
 
 All notable changes to ZATRANO are documented in this file.
 
+## 0.1.1 - 2026-08-06
+
+### Added
+
+- Nested markdown discovery for the documentation engine (`core/docs`)
+- Sidebar navigation via optional `navigation.json`
+- Previous/next page neighbors and custom `ViewRenderer` support for docs routes
+
 ## 0.1.0 - 2026-08-05
 
 Initial release.
