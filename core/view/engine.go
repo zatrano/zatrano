@@ -285,18 +285,54 @@ func (e *Engine) compileBladeLike(input string) string {
 }
 
 func compileForeachBlocks(input string) string {
-	re := mustCompile(`(?is)@foreach\s*\(\s*\$([a-zA-Z0-9_.]+)\s+as\s+(?:\$([a-zA-Z0-9_]+)\s*=>\s*)?\$([a-zA-Z0-9_]+)\s*\)(.*?)@endforeach`)
-	return re.ReplaceAllStringFunc(input, func(m string) string {
-		match := re.FindStringSubmatch(m)
-		if len(match) != 5 {
-			return m
+	const openTag = "@foreach"
+	const closeTag = "@endforeach"
+	for {
+		start := indexFold(input, openTag)
+		if start < 0 {
+			return input
+		}
+		headerEnd := strings.Index(input[start:], ")")
+		if headerEnd < 0 {
+			return input
+		}
+		headerEnd += start + 1
+		header := input[start:headerEnd]
+		reHeader := mustCompile(`(?is)@foreach\s*\(\s*\$([a-zA-Z0-9_.]+)\s+as\s+(?:\$([a-zA-Z0-9_]+)\s*=>\s*)?\$([a-zA-Z0-9_]+)\s*\)`)
+		match := reHeader.FindStringSubmatch(header)
+		if len(match) != 4 {
+			return input
+		}
+		bodyStart := headerEnd
+		depth := 1
+		i := bodyStart
+		end := -1
+		for i < len(input) {
+			if strings.EqualFold(substrPrefix(input, i, openTag), openTag) {
+				depth++
+				i += len(openTag)
+				continue
+			}
+			if strings.EqualFold(substrPrefix(input, i, closeTag), closeTag) {
+				depth--
+				if depth == 0 {
+					end = i
+					break
+				}
+				i += len(closeTag)
+				continue
+			}
+			i++
+		}
+		if end < 0 {
+			return input
 		}
 		path := match[1]
 		keyAlias := match[2]
 		alias := match[3]
-		body := match[4]
+		body := input[bodyStart:end]
+		var compiled string
 		if keyAlias != "" {
-			// Longer alias first so $i does not eat the prefix of $item.
 			if len(alias) >= len(keyAlias) {
 				body = rewriteNamedRangeAlias(body, alias)
 				body = rewriteNamedRangeAlias(body, keyAlias)
@@ -304,10 +340,27 @@ func compileForeachBlocks(input string) string {
 				body = rewriteNamedRangeAlias(body, keyAlias)
 				body = rewriteNamedRangeAlias(body, alias)
 			}
-			return fmt.Sprintf(`{{ range $%s, $%s := dataGet . %q }}%s{{ end }}`, keyAlias, alias, path, body)
+			body = compileForeachBlocks(body)
+			compiled = fmt.Sprintf(`{{ range $%s, $%s := dataGet . %q }}%s{{ end }}`, keyAlias, alias, path, body)
+		} else {
+			body = rewriteAlias(body, alias)
+			body = compileForeachBlocks(body)
+			compiled = fmt.Sprintf(`{{ range dataGet . %q }}%s{{ end }}`, path, body)
 		}
-		return fmt.Sprintf(`{{ range dataGet . %q }}%s{{ end }}`, path, rewriteAlias(body, alias))
-	})
+		input = input[:start] + compiled + input[end+len(closeTag):]
+	}
+}
+
+func indexFold(s, sub string) int {
+	lower := strings.ToLower(s)
+	return strings.Index(lower, strings.ToLower(sub))
+}
+
+func substrPrefix(s string, i int, prefix string) string {
+	if i+len(prefix) > len(s) {
+		return ""
+	}
+	return s[i : i+len(prefix)]
 }
 
 func rewriteNamedRangeAlias(body, alias string) string {
