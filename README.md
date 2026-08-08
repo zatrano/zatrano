@@ -27,6 +27,8 @@ ZATRANO keeps Go’s performance and clarity while giving you an opinionated app
 
 ## Learning ZATRANO
 
+You can learn more by reading the [ZATRANO documentation](https://zatrano.com/docs).
+
 Install a tagged release as a Go module:
 
 ```bash
